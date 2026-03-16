@@ -1,0 +1,179 @@
+import { useState } from 'react';
+import { Calendar } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/StatCard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { SessionOverTimeChart } from '@/pages/Dashboard/components/SessionOverTimeChart';
+import { DeviceUsageChart } from '@/pages/Dashboard/components/DeviceUsageChart';
+import { StimuliBreakdownChart } from '@/pages/Dashboard/components/StimuliBreakdownChart';
+import { SessionDurationChart } from './components/SessionDurationChart';
+import { TherapistActivityChart } from './components/TherapistActivityChart';
+import { DateRangePicker } from '@/components/DateRangePicker';
+import SessionsIcon from '@/assets/sessions.svg';
+import AverageSessionIcon from '@/assets/average-session.svg';
+import BluetoothIcon from '@/assets/bluetooth.svg';
+
+export function Analytics() {
+  const hasData = true; // Toggle to false to show empty states
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [dateRange, setDateRange] = useState('Custom date');
+
+  const handleDateSelect = (formattedRange: string) => {
+    setDateRange(formattedRange);
+  };
+
+  return (
+    <div className="h-full p-6 space-y-6">
+      {/* Filters Section */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsDatePickerOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer bg-white"
+          >
+            <Calendar className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium">{dateRange}</span>
+          </button>
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Therapist" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Therapist</SelectItem>
+              <SelectItem value="therapist1">Therapist 1</SelectItem>
+              <SelectItem value="therapist2">Therapist 2</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Device" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Device</SelectItem>
+              <SelectItem value="device1">Device 1</SelectItem>
+              <SelectItem value="device2">Device 2</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 cursor-pointer">
+          <span className="text-sm">Export</span>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard
+          icon={SessionsIcon}
+          label="Total Sessions"
+          value={hasData ? "365" : "—"}
+          iconBgColor="bg-blue-50"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          icon={AverageSessionIcon}
+          label="Avg Session Duration"
+          value={hasData ? "12m 30s" : "—"}
+          iconBgColor="bg-cyan-50"
+          iconColor="text-cyan-600"
+        />
+        <StatCard
+          icon={BluetoothIcon}
+          label="Active Devices"
+          value={hasData ? "24" : "—"}
+          iconBgColor="bg-green-50"
+          iconColor="text-green-600"
+        />
+      </div>
+
+      {/* Sessions Over Time Chart - REUSED */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-base font-semibold">Sessions Over Time</CardTitle>
+          <Select defaultValue="october">
+            <SelectTrigger className="w-[130px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="october">October</SelectItem>
+              <SelectItem value="september">September</SelectItem>
+              <SelectItem value="august">August</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent className="pb-8">
+          <SessionOverTimeChart hasData={hasData} />
+        </CardContent>
+      </Card>
+
+      {/* Bottom Grid - 4 Cards */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Stimuli Combination - REUSED */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Stimuli Combination</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StimuliBreakdownChart hasData={hasData} />
+          </CardContent>
+        </Card>
+
+        {/* Device Usage - REUSED */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-base font-semibold">Device Usage</CardTitle>
+            <Select defaultValue="top5">
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="top5">Top 5 Devices</SelectItem>
+                <SelectItem value="top10">Top 10 Devices</SelectItem>
+                <SelectItem value="all">All Devices</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardHeader>
+          <CardContent>
+            <DeviceUsageChart hasData={hasData} />
+          </CardContent>
+        </Card>
+
+        {/* Session Duration Distribution - NEW COMPONENT */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Session Duration Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SessionDurationChart hasData={hasData} />
+          </CardContent>
+        </Card>
+
+        {/* Therapist Activity - NEW COMPONENT */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Therapist Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TherapistActivityChart hasData={hasData} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Date Range Picker Modal */}
+      <DateRangePicker
+        isOpen={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        onSelect={handleDateSelect}
+        currentRange={dateRange}
+      />
+    </div>
+  );
+}
