@@ -50,17 +50,13 @@ export class DeviceController {
     return this.deviceService.findOne(id);
   }
 
-  @Post(':id/connect')
-  @ApiOperation({ summary: 'Connect a device via Bluetooth' })
-  @ApiParam({ name: 'id', description: 'Device UUID' })
+  @Post('connect')
+  @ApiOperation({ summary: 'Connect to a device via Bluetooth (auto-registers device and phone if needed)' })
   @ApiBody({ type: ConnectDeviceDto })
   @ApiResponse({ status: 200, description: 'Device connected successfully' })
-  @ApiResponse({ status: 404, description: 'Device not found' })
-  connect(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() connectDto: ConnectDeviceDto,
-  ) {
-    return this.deviceService.connect(id, connectDto);
+  @ApiResponse({ status: 201, description: 'Device and/or phone auto-registered and connected' })
+  connect(@Body() connectDto: ConnectDeviceDto) {
+    return this.deviceService.connect(connectDto);
   }
 
   @Post(':id/disconnect/:phoneId')

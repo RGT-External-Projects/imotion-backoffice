@@ -13,16 +13,39 @@ export class PatientService {
   ) {}
 
   async create(createPatientDto: CreatePatientDto): Promise<Patient> {
+    // Generate unique patient code
+    const patientCode = await this.generatePatientCode();
+    
     const patient = new Patient();
-    patient.firstName = createPatientDto.firstName;
-    patient.lastName = createPatientDto.lastName;
-    if (createPatientDto.age !== undefined) {
-      patient.age = createPatientDto.age;
-    }
+    patient.patientCode = patientCode;
+    patient.name = createPatientDto.name;
+    patient.tags = createPatientDto.tags || [];
     if (createPatientDto.notes) {
       patient.notes = createPatientDto.notes;
     }
+    patient.status = createPatientDto.status || 'active';
     return this.patientRepository.save(patient);
+  }
+
+  private async generatePatientCode(): Promise<string> {
+    // Get the count of existing patients to generate sequential code
+    const count = await this.patientRepository.count();
+    const nextNumber = count + 1;
+    
+    // Format as PAT-0001, PAT-0002, etc.
+    const code = `PAT-${nextNumber.toString().padStart(4, '0')}`;
+    
+    // Check if code already exists (edge case for concurrent requests)
+    const existing = await this.patientRepository.findOne({
+      where: { patientCode: code },
+    });
+    
+    if (existing) {
+      // If exists, recursively try next number
+      return this.generatePatientCode();
+    }
+    
+    return code;
   }
 
   async findAll(): Promise<Patient[]> {

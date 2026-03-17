@@ -16,20 +16,17 @@ export class Patient {
   @Column({ name: 'patient_code', unique: true })
   patientCode: string;
 
-  @Column({ name: 'first_name' })
-  firstName: string;
+  @Column()
+  name: string;
 
-  @Column({ name: 'last_name' })
-  lastName: string;
-
-  @Column({ name: 'display_name', nullable: true })
-  displayName: string;
-
-  @Column({ nullable: true })
-  age: number;
+  @Column({ type: 'jsonb', default: [] })
+  tags: string[];
 
   @Column({ type: 'text', nullable: true })
   notes: string;
+
+  @Column({ default: 'active' })
+  status: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
