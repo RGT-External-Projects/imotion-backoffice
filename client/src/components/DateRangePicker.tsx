@@ -8,7 +8,7 @@ interface DateRangePickerProps {
   currentRange: string;
 }
 
-export function DateRangePicker({ isOpen, onClose, onSelect, currentRange }: DateRangePickerProps) {
+export function DateRangePicker({ isOpen, onClose, onSelect }: DateRangePickerProps) {
   const [startDate, setStartDate] = useState('2025-06-13');
   const [endDate, setEndDate] = useState('2026-06-14');
 

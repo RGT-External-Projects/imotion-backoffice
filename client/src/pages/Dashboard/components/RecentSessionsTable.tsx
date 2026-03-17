@@ -1,6 +1,5 @@
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/EmptyState';
-import { Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TimeIcon from '@/assets/time.svg';
 

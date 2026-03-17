@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { deviceService, type Device } from '@/backend/device.service';
+import { deviceService } from '@/backend/device.service';
 
 // Query keys
 export const deviceKeys = {

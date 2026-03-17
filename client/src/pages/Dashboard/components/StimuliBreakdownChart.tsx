@@ -14,7 +14,7 @@ const emptyData = [
   { name: 'Visual', value: 100, color: '#e5e7eb' },
 ];
 
-const renderLegend = (props: any, hasData: boolean) => {
+const renderLegend = (_props: any, hasData: boolean) => {
   const items = hasData ? stimuliData : [
     { name: 'Visual', color: '#3b82f6' },
     { name: 'Audio', color: '#eab308' },
