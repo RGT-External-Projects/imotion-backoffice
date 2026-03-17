@@ -16,13 +16,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       server: ${{ steps.filter.outputs.server }}
+      workflow: ${{ steps.filter.outputs.workflow }}
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
-            workflow: '.github/workflows/**'
-            server: 'server/**'
+            workflow:
+              - '.github/workflows/**'
+            server:
+              - 'server/**'
 
   # Lint and test the server code
   lint-and-test:
@@ -41,18 +48,18 @@ jobs:
           cache-dependency-path: server/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./server
         run: |
-          cd server
           npm ci
 
       - name: Lint
+        working-directory: ./server
         run: |
-          cd server
           npm run lint
 
       - name: Test
+        working-directory: ./server
         run: |
-          cd server
           npm run test
 
   # Build and push Docker image
