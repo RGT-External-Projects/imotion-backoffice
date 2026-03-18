@@ -1,10 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import helmet from 'helmet';
+import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Winston Logger (replace default logger)
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  // Security: Helmet middleware (security headers)
+  app.use(helmet());
+
+  // Security: Request size limits (prevent payload attacks)
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ limit: '10mb', extended: true }));
+
+  // Security: Global exception filter (consistent error responses)
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Global prefix
   app.setGlobalPrefix('api');
@@ -44,7 +61,10 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  const server = await app.listen(port);
+
+  // Security: Request timeout (commented out for now - uncomment if needed)
+  // server.setTimeout(30000); // 30 seconds
 
   console.log(`Server running on http://localhost:${port}`);
   console.log(`Swagger docs available at http://localhost:${port}/api/docs`);
