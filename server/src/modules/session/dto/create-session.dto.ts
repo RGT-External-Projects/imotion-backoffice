@@ -28,17 +28,21 @@ export class CreateSessionDto {
     description: 'Initial session settings',
     example: {
       visual: {
-        brightness: 80,
-        contrast: 70,
-        colorMode: 'standard',
+        enabled: true,
+        color: '#FF0000',
+        speed: 5,
+        movement: 'circular',
+      },
+      vibration: {
+        enabled: true,
+        intensity: 70,
+        pulse: 'steady',
+        speed: 3,
       },
       audio: {
+        enabled: false,
         volume: 60,
-        soundType: 'nature',
-      },
-      tactile: {
-        intensity: 50,
-        pattern: 'wave',
+        type: 'nature',
       },
     },
   })
