@@ -32,7 +32,7 @@ RUN npm ci --only=production && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 3000
 
 # Command to run the application
 CMD ["node", "dist/src/main.js"]
