@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { WinstonModule } from 'nest-winston';
+import { winstonTransports } from './common/logger/winston.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmAsyncConfig } from './config/database.config';
@@ -16,6 +19,7 @@ import { NotificationSettingsModule } from './modules/notification-settings/noti
 import { NotificationModule } from './modules/notification/notification.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SeedModule } from './seed/seed.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -26,7 +30,17 @@ import { SeedModule } from './seed/seed.module';
     }),
     // Database
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    // Rate Limiting (100 requests per 15 minutes per IP)
+    ThrottlerModule.forRoot([{
+      ttl: 900000, // 15 minutes in milliseconds
+      limit: 100,
+    }]),
+    // Winston Logger (for structured logging)
+    WinstonModule.forRoot({
+      transports: winstonTransports,
+    }),
     // Feature modules
+    HealthModule,
     SessionModule,
     SessionActivityLogModule,
     DeviceModule,
