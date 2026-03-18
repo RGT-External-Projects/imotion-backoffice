@@ -15,7 +15,7 @@ The project is structured as a **full-stack TypeScript monorepo** containing:
 - **Advanced Analytics** with customizable filters (date range, therapist, device)
 - **Session Trends** over time with interactive charts
 - **Device Usage Statistics** with percentages
-- **Stimuli Breakdown** analysis (Visual, Audio, Tactile)
+- **Stimuli Breakdown** analysis (Visual, Audio, Vibration)
 - **Session Duration Distribution** with smart buckets
 - **Therapist Activity** tracking and performance metrics
 

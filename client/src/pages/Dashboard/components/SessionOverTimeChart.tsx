@@ -1,29 +1,30 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useSessionsOverTime } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SessionOverTimeChartProps {
   hasData: boolean;
 }
 
-const data = [
-  { date: 'Oct 1', sessions: 20 },
-  { date: 'Oct 2', sessions: 80 },
-  { date: 'Oct 3', sessions: 100 },
-  { date: 'Oct 4', sessions: 65 },
-  { date: 'Oct 5', sessions: 150 },
-  { date: 'Oct 6', sessions: 95 },
-  { date: 'Oct 7', sessions: 115 },
-  { date: 'Oct 8', sessions: 110 },
-  { date: 'Oct 9', sessions: 65 },
-  { date: 'Oct 10', sessions: 140 },
-  { date: 'Oct 11', sessions: 135 },
-  { date: 'Oct 12', sessions: 130 },
-  { date: 'Oct 13', sessions: 115 },
-  { date: 'Oct 14', sessions: 110 },
-  { date: 'Oct 15', sessions: 120 },
-];
-
 export function SessionOverTimeChart({ hasData }: SessionOverTimeChartProps) {
-  if (!hasData) {
+  // Fetch sessions over time data - will add month filter later
+  const { data: sessionsData, isLoading } = useSessionsOverTime();
+  
+  // Transform API data to chart format
+  const chartData = sessionsData?.data.map(item => ({
+    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    sessions: item.count
+  })) || [];
+  
+  if (isLoading) {
+    return (
+      <div className="h-[300px] space-y-3">
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+  
+  if (!hasData || chartData.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center">
         <p className="text-muted-foreground text-sm">No data showing</p>
@@ -33,7 +34,7 @@ export function SessionOverTimeChart({ hasData }: SessionOverTimeChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+      <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -54,16 +55,18 @@ export function SessionOverTimeChart({ hasData }: SessionOverTimeChartProps) {
         />
         <Tooltip
           contentStyle={{
-            backgroundColor: '#3b82f6',
-            border: 'none',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
             borderRadius: '8px',
-            color: 'white',
+            color: '#1f2937',
             padding: '8px 12px',
             fontSize: '14px',
-            fontWeight: 'bold',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
           }}
-          labelStyle={{ display: 'none' }}
-          formatter={(value: any) => [value, '']}
+          formatter={(value: any, name: any, props: any) => {
+            return [`${value} sessions`, props.payload.date];
+          }}
+          labelFormatter={() => ''}
         />
         <Area 
           type="monotone" 

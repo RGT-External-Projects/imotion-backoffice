@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,6 +14,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { SessionService } from './session.service';
 import { SessionActivityLogService } from '../session-activity-log/session-activity-log.service';
@@ -20,6 +22,8 @@ import { CreateSessionDto } from './dto/create-session.dto';
 import { CompleteSessionDto } from './dto/complete-session.dto';
 import { InterruptSessionDto } from './dto/interrupt-session.dto';
 import { CreateActivityLogDto } from './dto/create-activity-log.dto';
+import { QuerySessionsDto } from './dto/query-sessions.dto';
+import { PaginatedSessionsResponseDto } from './dto/paginated-sessions.response.dto';
 
 @ApiTags('Sessions')
 @Controller('sessions')
@@ -38,10 +42,10 @@ export class SessionController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all sessions' })
-  @ApiResponse({ status: 200, description: 'List of all sessions' })
-  findAll() {
-    return this.sessionService.findAll();
+  @ApiOperation({ summary: 'Get all sessions with pagination and filtering' })
+  @ApiResponse({ status: 200, description: 'Paginated list of sessions', type: PaginatedSessionsResponseDto })
+  findAll(@Query() query: QuerySessionsDto) {
+    return this.sessionService.findAllPaginated(query);
   }
 
   @Get(':id')
@@ -98,7 +102,10 @@ export class SessionController {
   }
 
   @Post(':id/activity-logs')
-  @ApiOperation({ summary: 'Create an activity log for a session' })
+  @ApiOperation({ 
+    summary: 'Create an activity log for a session',
+    description: 'For SETTINGS_CHANGED events, description and oldValue are optional - backend will auto-generate them'
+  })
   @ApiParam({ name: 'id', description: 'Session UUID' })
   @ApiBody({ type: CreateActivityLogDto })
   @ApiResponse({ status: 201, description: 'Activity log created successfully' })
@@ -107,12 +114,7 @@ export class SessionController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() createActivityLogDto: CreateActivityLogDto,
   ) {
-    return this.activityLogService.create(
-      id,
-      createActivityLogDto.eventType,
-      createActivityLogDto.description,
-      createActivityLogDto.metadata,
-    );
+    return this.sessionService.createActivityLogSmart(id, createActivityLogDto);
   }
 
   @Get(':id/activity-logs')

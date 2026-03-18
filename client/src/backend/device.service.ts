@@ -3,6 +3,7 @@ import api from './api.service';
 export interface Device {
   id: string;
   deviceId: string;
+  deviceName: string;
   therapistId: string;
   createdAt: Date;
   updatedAt: Date;

@@ -2,6 +2,7 @@ import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/StatCard';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -13,14 +14,21 @@ import { SessionOverTimeChart } from './components/SessionOverTimeChart';
 import { DeviceUsageChart } from './components/DeviceUsageChart';
 import { StimuliBreakdownChart } from './components/StimuliBreakdownChart';
 import { RecentSessionsTable } from './components/RecentSessionsTable';
+import { useDashboardStats } from '@/hooks/useAnalytics';
 import SessionsIcon from '@/assets/sessions.svg';
 import BluetoothIcon from '@/assets/bluetooth.svg';
 import AverageSessionIcon from '@/assets/average-session.svg';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  // Toggle this to see empty vs filled state
-  const hasData = true;
+  
+  // Fetch dashboard stats from API
+  const { data: stats, isLoading, isError } = useDashboardStats();
+  
+  // Determine if we have data (not loading and no error)
+  const hasData = !isLoading && !isError && !!stats;
+
+  console.log("dashboard stats", stats)
 
   return (
     <div className="h-full">
@@ -36,34 +44,52 @@ export function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={SessionsIcon}
-            label="Sessions Today"
-            value={hasData ? "124" : "—"}
-            iconBgColor="bg-blue-50"
-            iconColor="text-blue-600"
-          />
-          <StatCard
-            icon={BluetoothIcon}
-            label="Active Devices"
-            value={hasData ? "18" : "—"}
-            iconBgColor="bg-green-50"
-            iconColor="text-green-600"
-          />
-          <StatCard
-            icon={Users}
-            label="Patients"
-            value={hasData ? "4" : "—"}
-            iconBgColor="bg-purple-50"
-            iconColor="text-purple-600"
-          />
-          <StatCard
-            icon={AverageSessionIcon}
-            label="Avg Session Duration"
-            value={hasData ? "9m 20s" : "—"}
-            iconBgColor="bg-cyan-50"
-            iconColor="text-cyan-600"
-          />
+          {isLoading ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Skeleton className="h-10 w-10 rounded-lg flex-shrink-0" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                    <Skeleton className="h-9 w-20" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard
+                icon={SessionsIcon}
+                label="Sessions Today"
+                value={hasData ? stats.sessionsToday.toString() : "—"}
+                iconBgColor="bg-blue-50"
+                iconColor="text-blue-600"
+              />
+              <StatCard
+                icon={BluetoothIcon}
+                label="Active Devices"
+                value={hasData ? stats.activeDevices.toString() : "—"}
+                iconBgColor="bg-green-50"
+                iconColor="text-green-600"
+              />
+              <StatCard
+                icon={Users}
+                label="Patients"
+                value={hasData ? stats.totalPatients.toString() : "—"}
+                iconBgColor="bg-purple-50"
+                iconColor="text-purple-600"
+              />
+              <StatCard
+                icon={AverageSessionIcon}
+                label="Avg Session Duration"
+                value={hasData ? stats.avgSessionDuration : "—"}
+                iconBgColor="bg-cyan-50"
+                iconColor="text-cyan-600"
+              />
+            </>
+          )}
         </div>
 
         {/* Session Over Time Chart - Full Width */}

@@ -1,10 +1,12 @@
 import { Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 
 interface Session {
-  id: string;
+  id: string; // Full UUID for navigation
+  displayId: string; // Friendly display ID (S-0001)
   phoneId: string;
   device: string;
   stimuli: string[];
@@ -17,7 +19,11 @@ interface SessionsTableProps {
   sessions: Session[];
   currentPage: number;
   totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
   onPageChange: (page: number) => void;
+  isLoading?: boolean;
+  hasActiveFilters?: boolean;
 }
 
 const getStimuliColor = (stimuli: string) => {
@@ -33,8 +39,11 @@ const getStimuliColor = (stimuli: string) => {
   }
 };
 
-export function SessionsTable({ sessions, currentPage, totalPages, onPageChange }: SessionsTableProps) {
+export function SessionsTable({ sessions, currentPage, totalPages, totalItems, itemsPerPage, onPageChange, isLoading = false, hasActiveFilters = false }: SessionsTableProps) {
   const navigate = useNavigate();
+
+  // Show message when filters are active but no results
+  const showNoResultsMessage = !isLoading && sessions.length === 0 && hasActiveFilters;
 
   return (
     <>
@@ -53,25 +62,53 @@ export function SessionsTable({ sessions, currentPage, totalPages, onPageChange 
             </tr>
           </thead>
           <tbody className="text-sm">
-            {sessions.map((session, index) => (
-              <tr key={`${session.id}-${index}`} className="border-b last:border-0 hover:bg-gray-50">
-                <td className="p-4 font-medium">{session.id}</td>
-                <td className="p-4">{session.phoneId}</td>
-                <td className="p-4">{session.device}</td>
-                <td className="p-4">
-                  <div className="flex gap-1.5 flex-wrap">
-                    {session.stimuli.map((s) => (
-                      <Badge
-                        key={s}
-                        variant="secondary"
-                        className={getStimuliColor(s)}
-                      >
-                        {s}
-                      </Badge>
-                    ))}
+            {isLoading ? (
+              // Loading skeletons
+              Array.from({ length: 10 }).map((_, index) => (
+                <tr key={index} className="border-b">
+                  <td className="p-4"><Skeleton className="h-5 w-20" /></td>
+                  <td className="p-4"><Skeleton className="h-5 w-24" /></td>
+                  <td className="p-4"><Skeleton className="h-5 w-28" /></td>
+                  <td className="p-4"><Skeleton className="h-6 w-32" /></td>
+                  <td className="p-4"><Skeleton className="h-5 w-40" /></td>
+                  <td className="p-4"><Skeleton className="h-6 w-20" /></td>
+                  <td className="p-4"><Skeleton className="h-5 w-12" /></td>
+                  <td className="p-4"><Skeleton className="h-5 w-16" /></td>
+                </tr>
+              ))
+            ) : showNoResultsMessage ? (
+              <tr>
+                <td colSpan={8} className="p-12 text-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-muted-foreground text-lg mb-2">No sessions found</p>
+                    <p className="text-muted-foreground text-sm">Try adjusting your filters to find what you're looking for</p>
                   </div>
                 </td>
-                <td className="p-4 text-muted-foreground">{session.timestamp}</td>
+              </tr>
+            ) : (
+              sessions.map((session, index) => (
+              <tr key={`${session.id}-${index}`} className="border-b last:border-0 hover:bg-gray-50">
+                <td className="p-4 font-medium whitespace-nowrap">{session.displayId}</td>
+                <td className="p-4 whitespace-nowrap">{session.phoneId}</td>
+                <td className="p-4 whitespace-nowrap">{session.device}</td>
+                <td className="p-4">
+                  <div className="flex gap-1.5 flex-wrap">
+                    {session.stimuli.length > 0 ? (
+                      session.stimuli.map((s) => (
+                        <Badge
+                          key={s}
+                          variant="secondary"
+                          className={getStimuliColor(s)}
+                        >
+                          {s}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground text-xs">No stimuli</span>
+                    )}
+                  </div>
+                </td>
+                <td className="p-4 text-muted-foreground whitespace-nowrap">{session.timestamp}</td>
                 <td className="p-4">
                   <Badge
                     variant={session.status === 'Completed' ? 'default' : 'destructive'}
@@ -96,7 +133,8 @@ export function SessionsTable({ sessions, currentPage, totalPages, onPageChange 
                   </button>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -104,33 +142,46 @@ export function SessionsTable({ sessions, currentPage, totalPages, onPageChange 
       {/* Pagination */}
       <div className="flex items-center justify-between border-t p-4">
         <p className="text-sm text-muted-foreground">
-          Showing <span className="font-medium">1-10</span> from <span className="font-medium">46</span> data
+          Showing <span className="font-medium">{totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)}</span> from <span className="font-medium">{totalItems}</span> data
         </p>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || isLoading}
           >
             ‹
           </Button>
-          {[1, 2, 3, 4].map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onPageChange(page)}
-              className={currentPage === page ? 'bg-blue-600 hover:bg-blue-700' : ''}
-            >
-              {page}
-            </Button>
-          ))}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum: number;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+            return (
+              <Button
+                key={pageNum}
+                variant={currentPage === pageNum ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onPageChange(pageNum)}
+                disabled={isLoading}
+                className={currentPage === pageNum ? 'bg-blue-600 hover:bg-blue-700' : ''}
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || isLoading}
           >
             ›
           </Button>

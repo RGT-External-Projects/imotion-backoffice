@@ -47,7 +47,7 @@ export interface DeviceUsageData {
 export interface StimuliBreakdown {
   visual: number;
   audio: number;
-  tactile: number;
+  vibration: number;
 }
 
 export interface RecentSession {

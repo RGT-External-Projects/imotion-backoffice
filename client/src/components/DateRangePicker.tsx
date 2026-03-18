@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 interface DateRangePickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (startDate: string, endDate: string) => void;
+  onSelect: (formattedRange: string, startDate?: Date, endDate?: Date) => void;
   currentRange: string;
 }
 
@@ -18,7 +18,7 @@ export function DateRangePicker({ isOpen, onClose, onSelect }: DateRangePickerPr
     const start = new Date(startDate);
     const end = new Date(endDate);
     const formattedRange = `${start.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} - ${end.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
-    onSelect(formattedRange, endDate);
+    onSelect(formattedRange, start, end);
     onClose();
   };
 

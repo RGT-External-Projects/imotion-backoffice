@@ -1,30 +1,70 @@
 import { EmptyState } from '@/components/EmptyState';
 import BluetoothIcon from '@/assets/bluetooth.svg';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useDeviceUsage } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DeviceUsageChartProps {
   hasData: boolean;
 }
 
-const deviceData = [
-  { name: 'D - 103', usage: 85 },
-  { name: 'D - 118', usage: 72 },
-  { name: 'D - 107', usage: 65 },
-  { name: 'D - 089', usage: 48 },
-  { name: 'D - 074', usage: 35 },
-];
+// Custom tick component to handle long device names
+const CustomYAxisTick = (props: any) => {
+  const { x, y, payload } = props;
+  const maxLength = 12; // Maximum characters to show
+  const text = payload.value;
+  const displayText = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <title>{text}</title>
+      <text
+        x={0}
+        y={0}
+        dy={4}
+        textAnchor="end"
+        fill="#1f2937"
+        fontSize={13}
+      >
+        {displayText}
+      </text>
+    </g>
+  );
+};
 
 export function DeviceUsageChart({ hasData }: DeviceUsageChartProps) {
-  if (!hasData) {
+  // Fetch device usage data - will add limit filter later
+  const { data: deviceUsageData, isLoading } = useDeviceUsage({ limit: 5 });
+  
+  // Transform API data to chart format
+  const chartData = deviceUsageData?.devices.map(device => ({
+    name: device.deviceName,
+    usage: device.usagePercentage
+  })) || [];
+  
+  if (isLoading) {
+    return (
+      <div className="h-[250px] space-y-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-3 flex-1" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  
+  if (!hasData || chartData.length === 0) {
     return <EmptyState icon={BluetoothIcon} message="No devices added yet" />;
   }
 
   return (
     <ResponsiveContainer width="100%" height={250}>
       <BarChart 
-        data={deviceData} 
+        data={chartData} 
         layout="vertical"
-        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
         <XAxis 
@@ -38,10 +78,10 @@ export function DeviceUsageChart({ hasData }: DeviceUsageChartProps) {
         <YAxis 
           type="category" 
           dataKey="name"
-          tick={{ fontSize: 14, fill: '#1f2937' }}
+          tick={<CustomYAxisTick />}
           axisLine={false}
           tickLine={false}
-          width={60}
+          width={100}
         />
         <Tooltip
           contentStyle={{
@@ -59,7 +99,7 @@ export function DeviceUsageChart({ hasData }: DeviceUsageChartProps) {
           radius={[0, 8, 8, 0]}
           barSize={12}
         >
-          {deviceData.map((_entry, index) => (
+          {chartData.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill="#3b82f6" />
           ))}
         </Bar>

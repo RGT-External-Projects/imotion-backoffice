@@ -3,27 +3,96 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/EmptyState';
 import { SessionsFilters } from './components/SessionsFilters';
 import { SessionsTable } from './components/SessionsTable';
+import { useSessions } from '@/hooks/useSessions';
+import { type SessionQueryParams } from '@/backend/session.service';
+import { exportToCSV, getDateString } from '@/lib/export';
 import EmptyStateImage from '@/assets/empty-state.svg';
 
-const sessionData = [
-  { id: 'S1054', phoneId: 'P-021', device: 'D - 118', stimuli: ['Visual', 'Audio'], timestamp: '12 Jan 2026 • 09:15 AM', status: 'Completed' as const, duration: '8m' },
-  { id: 'S1053', phoneId: 'P-034', device: 'D - 103', stimuli: ['Visual', 'Vibration'], timestamp: '02 Feb 2026 • 14:45 PM', status: 'Completed' as const, duration: '12m' },
-  { id: 'S1052', phoneId: 'P-134', device: 'D -234', stimuli: ['Audio', 'Vibration'], timestamp: '23 Dec 2025 • 10:30 AM', status: 'Completed' as const, duration: '14m' },
-  { id: 'S1051', phoneId: 'P-012', device: 'D - 129', stimuli: ['Audio'], timestamp: '03 Nov 2025 • 12:00 PM', status: 'Completed' as const, duration: '10m' },
-  { id: 'S1050', phoneId: 'P-022', device: 'D-218', stimuli: ['Visual', 'Audio', 'Vibration'], timestamp: '02 Feb 2026 • 12:00 PM', status: 'Completed' as const, duration: '9m' },
-  { id: 'S1054', phoneId: 'P-789', device: 'D - 118', stimuli: ['Visual', 'Audio', 'Vibration'], timestamp: '14 Feb 2026 • 10:30 AM', status: 'Completed' as const, duration: '8m' },
-  { id: 'S1053', phoneId: 'P-341', device: 'D - 103', stimuli: ['Visual', 'Audio'], timestamp: '02 Feb 2026 • 12:00 PM', status: 'Completed' as const, duration: '12m' },
-  { id: 'S1052', phoneId: 'P-787', device: 'D -234', stimuli: ['Visual', 'Vibration'], timestamp: '05 Apr 2026 • 10:38 AM', status: 'Interrupted' as const, duration: '14m' },
-  { id: 'S1051', phoneId: 'P-345', device: 'D - 129', stimuli: ['Audio', 'Vibration'], timestamp: '13 Jun 2026 • 12:30 pM', status: 'Completed' as const, duration: '10m' },
-  { id: 'S1050', phoneId: 'P-678', device: 'D-218', stimuli: ['Audio'], timestamp: '14 Feb 2026 • 10:30 AM', status: 'Completed' as const, duration: '9m' },
-];
+// Helper to extract stimuli from settings
+const extractStimuli = (settings: any): string[] => {
+  const stimuli: string[] = [];
+  
+  // Check if each stimulus type exists
+  if (settings?.visual) stimuli.push('Visual');
+  if (settings?.audio) stimuli.push('Audio');
+  if (settings?.vibration || settings?.tactile) stimuli.push('Vibration'); // Fallback for old data
+  
+  return stimuli;
+};
+
+// Helper to format duration
+const formatDuration = (seconds: number | null): string => {
+  if (!seconds) return '0m';
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m`;
+};
+
+// Helper to generate session display ID (first 8 chars of UUID)
+const generateSessionId = (uuid: string, index: number, currentPage: number, itemsPerPage: number): string => {
+  const globalIndex = (currentPage - 1) * itemsPerPage + index;
+  return `S-${String(globalIndex + 1).padStart(4, '0')}`;
+};
 
 export function Sessions() {
-  const [hasData] = useState(true); // Toggle to see empty state
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 4;
+  const [filters, setFilters] = useState<SessionQueryParams>({
+    page: 1,
+    limit: 10,
+  });
 
-  if (!hasData) {
+  const { data: sessionResponse, isLoading, isError } = useSessions(filters);
+  
+  // Extract sessions and metadata from response
+  const sessions = sessionResponse?.data || [];
+  const meta = sessionResponse?.meta;
+
+  // Transform backend data to table format
+  const transformedSessions = sessions.map((session, index) => ({
+    id: session.id, // Keep full UUID for navigation
+    displayId: generateSessionId(session.id, index, filters.page || 1, filters.limit || 10),
+    phoneId: session.therapistPhone?.phoneNumber || 'Unknown',
+    device: session.device?.deviceName || 'Unknown',
+    stimuli: extractStimuli(session.finalSettings || session.initialSettings),
+    timestamp: new Date(session.sessionTimestamp).toLocaleString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).replace(',', ' •'),
+    status: session.status === 'COMPLETED' ? 'Completed' as const : 'Interrupted' as const,
+    duration: formatDuration(session.duration),
+  }));
+
+ 
+  // Handler for page change
+  const handlePageChange = (page: number) => {
+    setFilters(prev => ({ ...prev, page }));
+  };
+
+  // Handler for filter changes
+  const handleFilterChange = (newFilters: Partial<SessionQueryParams>) => {
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1 on filter change
+  };
+
+  // Handler for export
+  const handleExport = () => {
+    if (!transformedSessions || transformedSessions.length === 0) return;
+
+    // Define headers
+    const headers = ['Session ID', 'Phone ID', 'Device', 'Stimuli', 'Timestamp', 'Status', 'Duration'];
+    
+    // Prepare data for export (remove the 'id' field used for navigation)
+    const exportData = transformedSessions.map(({ id, ...session }) => session);
+
+    // Use reusable export utility
+    exportToCSV(exportData, headers, `sessions_export_${getDateString()}`);
+  };
+
+  // Check if there are any active filters
+  const hasActiveFilters = !!(filters.search || filters.deviceId || filters.status || filters.startDate || filters.endDate);
+
+  // Only show empty state if no filters are applied and there's no data
+  if (!isLoading && (!sessions || sessions.length === 0) && !hasActiveFilters) {
     return (
       <div className="h-full p-6">
         <EmptyState icon={EmptyStateImage} message="Completed session logs will be displayed here" />
@@ -33,14 +102,22 @@ export function Sessions() {
 
   return (
     <div className="h-full p-6 overflow-auto">
-      <SessionsFilters />
+      <SessionsFilters 
+        onFilterChange={handleFilterChange} 
+        currentFilters={filters}
+        onExport={handleExport}
+      />
       
       <Card>
         <SessionsTable
-          sessions={sessionData}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          sessions={transformedSessions}
+          currentPage={meta?.currentPage || 1}
+          totalPages={meta?.totalPages || 1}
+          totalItems={meta?.totalItems || 0}
+          itemsPerPage={meta?.itemsPerPage || 10}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
+          hasActiveFilters={hasActiveFilters}
         />
       </Card>
     </div>
