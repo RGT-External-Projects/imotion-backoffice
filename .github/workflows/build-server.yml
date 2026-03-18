@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: imotion-backoffice/server
+  IMAGE_NAME: imotion-dev-server-repo
 
 jobs:
   # Check for changes in the server folder
