@@ -1,19 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { deviceService } from '@/backend/device.service';
+import { deviceService, type DeviceQueryParams } from '@/backend/device.service';
 
 // Query keys
 export const deviceKeys = {
   all: ['devices'] as const,
+  paginated: (filters?: DeviceQueryParams) => ['devices', 'paginated', filters] as const,
   detail: (id: string) => ['devices', id] as const,
   byTherapist: (therapistId: string) => ['devices', 'therapist', therapistId] as const,
 };
 
-// Get all devices
-export const useDevices = () => {
+// Get all devices (legacy - without pagination)
+export const useAllDevices = () => {
   return useQuery({
     queryKey: deviceKeys.all,
     queryFn: async () => {
       const response = await deviceService.getAll();
+      return response.data;
+    },
+  });
+};
+
+// Get devices with pagination and filters
+export const useDevices = (filters?: DeviceQueryParams) => {
+  return useQuery({
+    queryKey: deviceKeys.paginated(filters),
+    queryFn: async () => {
+      const response = await deviceService.getAllPaginated(filters);
       return response.data;
     },
   });

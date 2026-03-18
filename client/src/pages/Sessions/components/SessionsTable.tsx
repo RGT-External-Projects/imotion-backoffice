@@ -139,7 +139,8 @@ export function SessionsTable({ sessions, currentPage, totalPages, totalItems, i
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - only show when more than one page */}
+      {totalPages > 1 && (
       <div className="flex items-center justify-between border-t p-4">
         <p className="text-sm text-muted-foreground">
           Showing <span className="font-medium">{totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)}</span> from <span className="font-medium">{totalItems}</span> data
@@ -187,6 +188,7 @@ export function SessionsTable({ sessions, currentPage, totalPages, totalItems, i
           </Button>
         </div>
       </div>
+      )}
     </>
   );
 }

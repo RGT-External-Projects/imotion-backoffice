@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,12 +14,15 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { DeviceService } from './device.service';
 import { RegisterDeviceDto } from './dto/register-device.dto';
 import { ConnectDeviceDto } from './dto/connect-device.dto';
 import { UpdateFirmwareDto } from './dto/update-firmware.dto';
 import { PairPhoneDto } from './dto/pair-phone.dto';
+import { QueryDevicesDto } from './dto/query-devices.dto';
+import { PaginatedDevicesResponseDto } from './dto/paginated-devices.response.dto';
 
 @ApiTags('Devices')
 @Controller('devices')
@@ -34,8 +38,15 @@ export class DeviceController {
     return this.deviceService.register(registerDto);
   }
 
+  @Get('paginated')
+  @ApiOperation({ summary: 'Get all devices with pagination, filtering, and search' })
+  @ApiResponse({ status: 200, description: 'Paginated list of devices', type: PaginatedDevicesResponseDto })
+  findAllPaginated(@Query() query: QueryDevicesDto) {
+    return this.deviceService.findAllPaginated(query);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Get all devices' })
+  @ApiOperation({ summary: 'Get all devices (legacy - without pagination)' })
   @ApiResponse({ status: 200, description: 'List of all devices' })
   findAll() {
     return this.deviceService.findAll();

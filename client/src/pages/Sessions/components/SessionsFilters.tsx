@@ -23,7 +23,8 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport }: Se
   const [searchTerm, setSearchTerm] = useState('');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
-  const { data: devices } = useDevices();
+  const { data: devicesResponse } = useDevices();
+  const devices = devicesResponse?.data || [];
   
   // Use current filter values for controlled components
   const device = currentFilters.deviceId || 'all';
