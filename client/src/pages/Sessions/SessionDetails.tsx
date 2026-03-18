@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Activity as ActivityIcon, Smartphone, User, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Activity as ActivityIcon, Smartphone, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { StimulusCards } from './components/StimulusCards';
