@@ -126,16 +126,6 @@ export function SessionDetails() {
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-500 mb-2">Last used</p>
-                        <p className="text-xl font-semibold text-gray-900">26 Feb 2026</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
                       <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Duration</p>

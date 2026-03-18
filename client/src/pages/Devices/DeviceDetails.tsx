@@ -76,11 +76,6 @@ export function DeviceDetails() {
             <span>Firmware version: v1.2.4</span>
             <span>•</span>
             <span>Firmware version: 26 Feb 2026</span>
-            <span>•</span>
-            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-              <span className="mr-1.5">●</span>
-              Active
-            </Badge>
           </div>
         </div>
       </div>
@@ -252,19 +247,6 @@ export function DeviceDetails() {
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Last used</p>
                         <p className="text-xl font-semibold text-gray-900">26 Feb 2026</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <Activity className="h-5 w-5 text-gray-400 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-500 mb-2">Status</p>
-                        <Badge className="bg-green-600 text-white hover:bg-green-600 mt-1">
-                          <span className="mr-1.5">✓</span>
-                          Active
-                        </Badge>
                       </div>
                     </div>
                   </div>
