@@ -22,7 +22,7 @@
     "migration:generate": "npm run typeorm -- migration:generate -d ormconfig.ts",
     "migration:create": "npm run typeorm -- migration:create",
     "migration:run": "npm run typeorm -- migration:run -d ormconfig.ts",
-    "migration:run:prod": "typeorm migration:run -d dist/config/database.config.js",
+    "migration:run:prod": "typeorm migration:run -d dist/src/config/database.config.js",
     "migration:revert": "npm run typeorm -- migration:revert -d ormconfig.ts",
     "schema:drop": "npm run typeorm -- schema:drop -d ormconfig.ts",
     "schema:sync": "npm run typeorm -- schema:sync -d ormconfig.ts"
