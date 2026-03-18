@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SessionOverTimeChart } from '@/pages/Dashboard/components/SessionOverTimeChart';
-import { DeviceUsageChart } from '@/pages/Dashboard/components/DeviceUsageChart';
-import { StimuliBreakdownChart } from '@/pages/Dashboard/components/StimuliBreakdownChart';
+import { StimuliCombinationChart } from './components/StimuliCombinationChart';
+import { DeviceUsageSessionsChart } from './components/DeviceUsageSessionsChart';
 import { SessionDurationChart } from './components/SessionDurationChart';
-import { TherapistActivityChart } from './components/TherapistActivityChart';
+import { PhoneSessionsChart } from './components/PhoneSessionsChart';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import SessionsIcon from '@/assets/sessions.svg';
 import AverageSessionIcon from '@/assets/average-session.svg';
@@ -116,20 +116,20 @@ export function Analytics() {
 
       {/* Bottom Grid - 4 Cards */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Stimuli Combination - REUSED */}
+        {/* Stimuli Combination */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Stimuli Combination</CardTitle>
           </CardHeader>
           <CardContent>
-            <StimuliBreakdownChart hasData={hasData} />
+            <StimuliCombinationChart hasData={hasData} />
           </CardContent>
         </Card>
 
-        {/* Device Usage - REUSED */}
+        {/* Device Usage Sessions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-base font-semibold">Device Usage</CardTitle>
+            <CardTitle className="text-base font-semibold">Device Usage Sessions</CardTitle>
             <Select defaultValue="top5">
               <SelectTrigger className="w-[140px] h-9">
                 <SelectValue />
@@ -142,11 +142,11 @@ export function Analytics() {
             </Select>
           </CardHeader>
           <CardContent>
-            <DeviceUsageChart hasData={hasData} />
+            <DeviceUsageSessionsChart hasData={hasData} />
           </CardContent>
         </Card>
 
-        {/* Session Duration Distribution - NEW COMPONENT */}
+        {/* Session Duration Distribution */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Session Duration Distribution</CardTitle>
@@ -156,13 +156,13 @@ export function Analytics() {
           </CardContent>
         </Card>
 
-        {/* Therapist Activity - NEW COMPONENT */}
+        {/* Phone Sessions */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Therapist Activity</CardTitle>
+            <CardTitle className="text-base font-semibold">Phone Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <TherapistActivityChart hasData={hasData} />
+            <PhoneSessionsChart hasData={hasData} />
           </CardContent>
         </Card>
       </div>
