@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { therapistService, type Therapist } from '@/backend/therapist.service';
+import { therapistService } from '@/backend/therapist.service';
 
 // Query keys
 export const therapistKeys = {

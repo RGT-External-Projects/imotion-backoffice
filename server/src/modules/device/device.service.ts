@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Device } from './entities/device.entity';
+import { TherapistPhone } from '../therapist-phone/entities/therapist-phone.entity';
 import { DeviceActivityLogService } from '../device-activity-log/device-activity-log.service';
 import { DeviceActivityEventType } from '../device-activity-log/entities/device-activity-log.entity';
+import { TherapistPhoneService } from '../therapist-phone/therapist-phone.service';
 import { RegisterDeviceDto } from './dto/register-device.dto';
 import { ConnectDeviceDto } from './dto/connect-device.dto';
 import { UpdateFirmwareDto } from './dto/update-firmware.dto';
@@ -14,7 +16,11 @@ export class DeviceService {
   constructor(
     @InjectRepository(Device)
     private readonly deviceRepository: Repository<Device>,
+    @InjectRepository(TherapistPhone)
+    private readonly therapistPhoneRepository: Repository<TherapistPhone>,
+    private readonly dataSource: DataSource,
     private readonly activityLogService: DeviceActivityLogService,
+    private readonly therapistPhoneService: TherapistPhoneService,
   ) {}
 
   async register(registerDto: RegisterDeviceDto): Promise<Device> {
@@ -60,45 +66,241 @@ export class DeviceService {
     return savedDevice;
   }
 
-  async findAll(): Promise<Device[]> {
-    return this.deviceRepository.find({
-      relations: ['therapistPhones'],
-      order: { createdAt: 'DESC' },
-    });
+  /**
+   * Get all devices with enriched data for UI
+   * Returns: device info + session count + last connected phone
+   */
+  async findAll(): Promise<any[]> {
+    // Use QueryBuilder for efficient queries with counts
+    const devices = await this.deviceRepository
+      .createQueryBuilder('device')
+      .leftJoinAndSelect('device.sessions', 'session')
+      .leftJoinAndSelect('device.activityLogs', 'log')
+      .orderBy('device.createdAt', 'DESC')
+      .getMany();
+
+    // Enrich each device with computed data
+    const enrichedDevices = await Promise.all(
+      devices.map(async (device) => {
+        // Get total session count
+        const sessionCount = device.sessions?.length || 0;
+
+        // Get last connected therapist phone from activity logs
+        // Find most recent DEVICE_CONNECTED log
+        const lastConnectionLog = device.activityLogs
+          ?.filter(log => log.eventType === 'DEVICE_CONNECTED')
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        let lastConnectedPhone: TherapistPhone | null = null;
+        if (lastConnectionLog && lastConnectionLog.metadata?.therapistPhoneId) {
+          // Fetch the therapist phone details
+          lastConnectedPhone = await this.therapistPhoneRepository.findOne({
+            where: { id: lastConnectionLog.metadata.therapistPhoneId },
+          });
+        }
+
+        return {
+          id: device.id,
+          deviceId: device.deviceId,
+          deviceName: device.deviceName,
+          serialNumber: device.serialNumber,
+          isActive: device.isActive,
+          firmwareVersion: device.firmwareVersion,
+          lastConnected: device.lastConnected,
+          createdAt: device.createdAt,
+          updatedAt: device.updatedAt,
+          // Computed/enriched fields
+          sessionCount,
+          lastConnectedPhone: lastConnectedPhone ? {
+            id: lastConnectedPhone.id,
+            phoneNumber: lastConnectedPhone.phoneNumber,
+            displayName: lastConnectedPhone.displayName,
+          } : null,
+        };
+      })
+    );
+
+    return enrichedDevices;
   }
 
-  async findOne(id: string): Promise<Device> {
-    const device = await this.deviceRepository.findOne({
-      where: { id },
-      relations: ['therapistPhones', 'sessions', 'activityLogs'],
-    });
+  /**
+   * Get single device with all related data
+   * Returns: device + sessions + activity logs + therapist phones + computed statistics
+   */
+  async findOne(id: string): Promise<any> {
+    const device = await this.deviceRepository
+      .createQueryBuilder('device')
+      .leftJoinAndSelect('device.therapistPhones', 'phone')
+      .leftJoinAndSelect('device.sessions', 'session')
+      .leftJoinAndSelect('device.activityLogs', 'log')
+      .where('device.id = :id', { id })
+      .orderBy('log.timestamp', 'DESC')
+      .addOrderBy('session.createdAt', 'DESC')
+      .getOne();
 
     if (!device) {
       throw new NotFoundException(`Device with ID ${id} not found`);
     }
 
-    return device;
+    // Calculate usage statistics
+    const totalSessions = device.sessions?.length || 0;
+    
+    const avgSessionDuration = device.sessions?.length > 0
+      ? device.sessions.reduce((sum, session) => sum + (session.duration || 0), 0) / device.sessions.length
+      : 0;
+    
+    const phonesConnected = device.therapistPhones?.length || 0;
+
+    // Return device with computed statistics
+    return {
+      ...device,
+      statistics: {
+        totalSessions,
+        avgSessionDuration,  // in seconds
+        avgSessionDurationFormatted: this.formatDuration(avgSessionDuration),
+        phonesConnected,
+      },
+    };
   }
 
-  async connect(id: string, connectDto: ConnectDeviceDto): Promise<void> {
-    const device = await this.findOne(id);
+  /**
+   * Format duration from seconds to readable string
+   */
+  private formatDuration(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}m ${secs}s`;
+  }
 
-    // Update last connected timestamp
-    device.lastConnected = new Date();
-    await this.deviceRepository.save(device);
+  /**
+   * Connect to device with auto-registration
+   * Uses database transactions for atomicity and proper isolation
+   * @param connectDto - Connection details including phone and device info
+   * @returns Device and therapist phone ID
+   */
+  async connect(connectDto: ConnectDeviceDto): Promise<{ device: Device; therapistPhoneId: string }> {
+    // Use a transaction to ensure atomicity
+    // If any step fails, everything rolls back
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction('READ COMMITTED'); // Prevent dirty reads
 
-    // Create DEVICE_CONNECTED log
-    await this.activityLogService.create(
-      id,
-      DeviceActivityEventType.DEVICE_CONNECTED,
-      `Device ${device.deviceId} connected via Bluetooth`,
-      {
-        therapistPhoneId: connectDto.therapistPhoneId,
-        batteryLevel: connectDto.batteryLevel,
-        signalStrength: connectDto.signalStrength,
-        connectionType: 'bluetooth',
-      },
-    );
+    try {
+      // STEP 1: Find or create therapist phone with pessimistic write lock
+      // This prevents race conditions when multiple requests try to register same phone
+      let therapistPhone = await queryRunner.manager.findOne(TherapistPhone, {
+        where: { phoneNumber: connectDto.phoneUniqueId },
+        lock: { mode: 'pessimistic_write' }, // Lock row for update
+      });
+
+      if (!therapistPhone) {
+        // Auto-register therapist phone
+        therapistPhone = queryRunner.manager.create(TherapistPhone, {
+          phoneNumber: connectDto.phoneUniqueId,
+          displayName: connectDto.phoneModel || connectDto.phoneNumber || 'Unknown Phone',
+        });
+        therapistPhone = await queryRunner.manager.save(TherapistPhone, therapistPhone);
+      }
+
+      // STEP 2: Find or create device with pessimistic write lock
+      let device = await queryRunner.manager.findOne(Device, {
+        where: { deviceId: connectDto.deviceId },
+        lock: { mode: 'pessimistic_write' }, // Lock row for update
+      });
+
+      let isNewDevice = false;
+      if (!device) {
+        // Auto-register device
+        device = queryRunner.manager.create(Device, {
+          deviceId: connectDto.deviceId,
+          serialNumber: connectDto.serialNumber || connectDto.deviceId,
+          deviceName: connectDto.model || connectDto.deviceId,
+          firmwareVersion: connectDto.firmwareVersion,
+          isActive: true,
+          lastConnected: new Date(),
+        });
+        device = await queryRunner.manager.save(Device, device);
+        isNewDevice = true;
+      } else {
+        // Update last connected timestamp (row is locked)
+        device.lastConnected = new Date();
+        await queryRunner.manager.save(Device, device);
+      }
+
+      // STEP 3: Link device and therapist phone in junction table
+      // Check if the relationship already exists
+      const existingLink = await queryRunner.manager
+        .createQueryBuilder()
+        .select()
+        .from('device_therapist_phones', 'dtp')
+        .where('dtp.device_id = :deviceId', { deviceId: device.id })
+        .andWhere('dtp.therapist_phone_id = :phoneId', { phoneId: therapistPhone.id })
+        .getRawOne();
+
+      if (!existingLink) {
+        // Insert into junction table
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into('device_therapist_phones')
+          .values({
+            device_id: device.id,
+            therapist_phone_id: therapistPhone.id,
+          })
+          .execute();
+      }
+
+      // Commit transaction - all operations succeed together
+      await queryRunner.commitTransaction();
+
+      // Log activities AFTER successful commit (outside transaction to prevent deadlocks)
+      try {
+        if (isNewDevice) {
+          await this.activityLogService.create(
+            device.id,
+            DeviceActivityEventType.DEVICE_REGISTERED,
+            `Device ${device.deviceId} registered in the system`,
+            {
+              deviceId: device.deviceId,
+              serialNumber: device.serialNumber,
+              model: device.deviceName,
+              firmwareVersion: device.firmwareVersion,
+              autoRegistered: true,
+            },
+          );
+        }
+
+        await this.activityLogService.create(
+          device.id,
+          DeviceActivityEventType.DEVICE_CONNECTED,
+          `Device ${device.deviceId} connected via Bluetooth`,
+          {
+            therapistPhoneId: therapistPhone.id,
+            phoneModel: connectDto.phoneModel,
+            phoneNumber: connectDto.phoneNumber,
+            batteryLevel: connectDto.batteryLevel,
+            signalStrength: connectDto.signalStrength,
+            connectionType: 'bluetooth',
+            isNewDevice,
+          },
+        );
+      } catch (logError) {
+        // Log errors but don't fail the connection
+        console.error('Failed to create activity logs:', logError);
+      }
+
+      return {
+        device,
+        therapistPhoneId: therapistPhone.id,
+      };
+    } catch (error) {
+      // Rollback transaction on any error - maintains data integrity
+      await queryRunner.rollbackTransaction();
+      throw error; // Re-throw for proper error handling upstream
+    } finally {
+      // Release query runner resources
+      await queryRunner.release();
+    }
   }
 
   async disconnect(id: string, therapistPhoneId: string): Promise<void> {
@@ -180,7 +382,40 @@ export class DeviceService {
 
   async getTherapistPhones(id: string) {
     const device = await this.findOne(id);
-    return device.therapistPhones;
+    
+    // Enrich each phone with session count and last connected time
+    const enrichedPhones = await Promise.all(
+      device.therapistPhones.map(async (phone) => {
+        // Count sessions run by this phone on this device
+        const sessionCount = await this.dataSource
+          .getRepository('Session')
+          .createQueryBuilder('session')
+          .where('session.device_id = :deviceId', { deviceId: device.id })
+          .andWhere('session.therapist_phone_id = :phoneId', { phoneId: phone.id })
+          .getCount();
+
+        // Find last connection from activity logs
+        const lastConnectionLog = device.activityLogs
+          ?.filter(log => 
+            log.eventType === 'DEVICE_CONNECTED' && 
+            log.metadata?.therapistPhoneId === phone.id
+          )
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        return {
+          id: phone.id,
+          phoneNumber: phone.phoneNumber,
+          displayName: phone.displayName,
+          createdAt: phone.createdAt,
+          updatedAt: phone.updatedAt,
+          // Enriched fields for UI
+          sessionsRun: sessionCount,
+          lastConnected: lastConnectionLog?.timestamp || phone.updatedAt,
+        };
+      })
+    );
+
+    return enrichedPhones;
   }
 
   async remove(id: string): Promise<void> {

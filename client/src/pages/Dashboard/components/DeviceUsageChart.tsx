@@ -59,7 +59,7 @@ export function DeviceUsageChart({ hasData }: DeviceUsageChartProps) {
           radius={[0, 8, 8, 0]}
           barSize={12}
         >
-          {deviceData.map((entry, index) => (
+          {deviceData.map((_entry, index) => (
             <Cell key={`cell-${index}`} fill="#3b82f6" />
           ))}
         </Bar>

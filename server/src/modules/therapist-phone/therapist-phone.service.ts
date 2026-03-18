@@ -35,8 +35,14 @@ export class TherapistPhoneService {
 
   async findAll(): Promise<TherapistPhone[]> {
     return this.therapistPhoneRepository.find({
-      relations: ['devices'],
+      relations: ['devices', 'sessions'],
       order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByPhoneNumber(phoneNumber: string): Promise<TherapistPhone | null> {
+    return this.therapistPhoneRepository.findOne({
+      where: { phoneNumber },
     });
   }
 

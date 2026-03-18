@@ -50,7 +50,7 @@ const initialUsers: User[] = [
 ];
 
 export function UserManagementTab() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users] = useState<User[]>(initialUsers);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [showDropdownId, setShowDropdownId] = useState<string | null>(null);
 

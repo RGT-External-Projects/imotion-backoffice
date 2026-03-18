@@ -226,7 +226,7 @@ export class AnalyticsController {
       therapistPhoneId: session.therapistPhoneId,
       therapistName: session.therapistPhone?.phoneNumber || 'Unknown',
       patientId: session.patientId,
-      patientName: session.patient ? `${session.patient.firstName} ${session.patient.lastName}` : 'Unknown',
+      patientName: session.patient ? session.patient.name : 'Unknown',
       stimuli: this.helperService.extractStimuliTypes(session.initialSettings),
       timestamp: session.sessionTimestamp,
       duration: session.duration ? this.helperService.formatDuration(session.duration) : '—',
