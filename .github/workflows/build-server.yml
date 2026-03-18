@@ -1,0 +1,135 @@
+name: Build Server
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: imotion-dev-server-repo
+
+jobs:
+  # Check for changes in the server folder
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            workflow:
+              - '.github/workflows/**'
+            server:
+              - 'server/**'
+
+  # Lint and test the server code
+  lint-and-test:
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./server
+        run: |
+          npm ci
+
+      - name: Lint
+        working-directory: ./server
+        run: |
+          npm run lint
+        continue-on-error: true
+
+      - name: Test
+        working-directory: ./server
+        run: |
+          npm run test
+        continue-on-error: true
+
+  # Build and push Docker image
+  build-and-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: "true"
+          registry-type: private
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Notify on completion
+  notify:
+    needs: [changes, lint-and-test, build-and-push]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        uses: appleboy/discord-action@v1.2.0
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          username: IMotion Pipeline Bot
+          message: |
+            **Build Server Pipeline Completed**
+            Status: ${{ job.status }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
