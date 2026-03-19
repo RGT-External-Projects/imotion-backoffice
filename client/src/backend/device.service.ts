@@ -1,4 +1,5 @@
 import api from './api.service';
+import type { SessionSettings } from './session.service';
 
 export interface Device {
   id: string;
@@ -16,26 +17,6 @@ export interface Device {
     phoneNumber: string;
     displayName: string;
   } | null;
-}
-
-export interface SessionSettings {
-  visual: {
-    enabled: boolean;
-    color: string;
-    speed: number;
-    movement: string;
-  };
-  vibration: {
-    enabled: boolean;
-    intensity: number;
-    pulse: string;
-    speed: number;
-  };
-  audio: {
-    enabled: boolean;
-    volume?: number;
-    type?: string;
-  };
 }
 
 export interface DeviceSession {

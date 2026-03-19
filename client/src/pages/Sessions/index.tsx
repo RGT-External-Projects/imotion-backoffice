@@ -28,7 +28,7 @@ const formatDuration = (seconds: number | null): string => {
 };
 
 // Helper to generate session display ID (first 8 chars of UUID)
-const generateSessionId = (uuid: string, index: number, currentPage: number, itemsPerPage: number): string => {
+const generateSessionId = (_uuid: string, index: number, currentPage: number, itemsPerPage: number): string => {
   const globalIndex = (currentPage - 1) * itemsPerPage + index;
   return `S-${String(globalIndex + 1).padStart(4, '0')}`;
 };
@@ -39,7 +39,7 @@ export function Sessions() {
     limit: 10,
   });
 
-  const { data: sessionResponse, isLoading, isError } = useSessions(filters);
+  const { data: sessionResponse, isLoading } = useSessions(filters);
   
   // Extract sessions and metadata from response
   const sessions = sessionResponse?.data || [];

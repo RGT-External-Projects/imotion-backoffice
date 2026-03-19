@@ -63,8 +63,8 @@ export function SessionOverTimeChart({ hasData }: SessionOverTimeChartProps) {
             fontSize: '14px',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
           }}
-          formatter={(value: any, name: any, props: any) => {
-            return [`${value} sessions`, props.payload.date];
+          formatter={(value: any) => {
+            return [`${value} sessions`];
           }}
           labelFormatter={() => ''}
         />

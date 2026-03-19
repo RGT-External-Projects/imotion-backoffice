@@ -39,7 +39,6 @@ export function StimuliBreakdownChart({ hasData }: StimuliBreakdownChartProps) {
     { name: 'Vibration', value: stimuliData.vibration, color: '#22c55e' },
   ] : [];
   
-  const emptyData = [{ name: 'Visual', value: 100, color: '#e5e7eb' }];
   const chartData = (hasData && !isLoading && stimuliChartData.length > 0) ? stimuliChartData : emptyData;
 
   if (isLoading) {
