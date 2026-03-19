@@ -31,12 +31,24 @@ export const useDevices = (filters?: DeviceQueryParams) => {
   });
 };
 
-// Get single device by ID
+// Get single device by ID (basic info)
 export const useDevice = (id: string) => {
   return useQuery({
     queryKey: deviceKeys.detail(id),
     queryFn: async () => {
       const response = await deviceService.getById(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
+// Get device details with all related data (sessions, activity logs, therapist phones, statistics)
+export const useDeviceDetails = (id: string | undefined) => {
+  return useQuery({
+    queryKey: deviceKeys.detail(id!),
+    queryFn: async () => {
+      const response = await deviceService.getById(id!);
       return response.data;
     },
     enabled: !!id,

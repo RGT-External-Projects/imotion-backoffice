@@ -1,61 +1,125 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Activity, Clock, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useDeviceDetails } from '@/hooks/useDevices';
+import { format } from 'date-fns';
 
 type TabType = 'overview' | 'timeline';
 
-const sessionHistory = [
-  { id: 'S1054', phoneId: 'P-021', patientCode: 'P-021', timestamp: '12 Jan 2026 • 09:15 AM', duration: '8m' },
-  { id: 'S1053', phoneId: 'P-034', patientCode: 'P-034', timestamp: '02 Feb 2026 • 14:45 PM', duration: '12m' },
-  { id: 'S1054', phoneId: 'P-134', patientCode: 'P-134', timestamp: '23 Dec 2025 • 10:30 AM', duration: '12m' },
-  { id: 'S1051', phoneId: 'P-345', patientCode: 'P-345', timestamp: '02 Feb 2026 • 12:00 PM', duration: '10m' },
-  { id: 'S1050', phoneId: 'P-678', patientCode: 'P-678', timestamp: '14 Feb 2026 • 10:30 AM', duration: '9m' },
-];
+// Helper to format duration from seconds to "Xm Ys"
+const formatDuration = (seconds: number | null | undefined): string => {
+  if (!seconds) return '0m 0s';
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${minutes}m ${secs}s`;
+};
 
-const phoneConnectionHistory = [
-  { phoneId: 'P-021', sessionsRun: 120, lastConnected: '12 Jan 2026 • 09:15 AM' },
-  { phoneId: 'P-345', sessionsRun: 70, lastConnected: '02 Feb 2026 • 12:00 PM' },
-  { phoneId: 'P-678', sessionsRun: 22, lastConnected: '14 Feb 2026 • 10:30 AM' },
-];
+// Helper to format timestamp
+const formatTimestamp = (dateString: string): string => {
+  try {
+    return format(new Date(dateString), 'dd MMM yyyy • hh:mm a');
+  } catch {
+    return dateString;
+  }
+};
 
-const timelineEvents = [
-  {
-    timestamp: 'February 26, 2026 - 09:11 AM',
-    title: 'Session Started',
-    description: 'Phone-02 initiated Session S1054 on device D-118 for patient P-233'
-  },
-  {
-    timestamp: 'February 26, 2026 09:15 AM',
-    title: 'Stimuli Configuration adjusted',
-    description: 'Visual stimulus speed adjusted from Level 10 to Level 13 during Session S1054.'
-  },
-  {
-    timestamp: 'February 26, 2026 09:23 AM',
-    title: 'Session Paused',
-    description: 'Session S1054 was paused by Phone-02 during the active test session.'
-  },
-  {
-    timestamp: 'February 26, 2026 09:23 AM',
-    title: 'Session Resumed',
-    description: 'Session S1054 resumed after pause by Phone-02.'
-  },
-  {
-    timestamp: 'February 26, 2026 09:45 AM',
-    title: 'Session Completed',
-    description: 'Session S1054 ended successfully with a duration of 8 minutes'
-  },
-  {
-    timestamp: 'February 26, 2026 09:45 AM',
-    title: 'Device Connected',
-    description: 'Device D-118 connected to Phone-01 via Bluetooth.'
-  },
-];
+// Helper to format timeline timestamp
+const formatTimelineTimestamp = (dateString: string): string => {
+  try {
+    return format(new Date(dateString), 'MMMM dd, yyyy - hh:mm a');
+  } catch {
+    return dateString;
+  }
+};
+
+// Map event types to readable titles
+const getEventTitle = (eventType: string): string => {
+  const titles: Record<string, string> = {
+    'SESSION_STARTED': 'Session Started',
+    'SESSION_COMPLETED': 'Session Completed',
+    'DEVICE_CONNECTED': 'Device Connected',
+    'DEVICE_DISCONNECTED': 'Device Disconnected',
+    'FIRMWARE_UPDATED': 'Firmware Updated',
+    'DEVICE_REGISTERED': 'Device Registered',
+    'THERAPIST_PHONE_CONNECTED': 'Therapist Phone Connected',
+    'THERAPIST_PHONE_DISCONNECTED': 'Therapist Phone Disconnected',
+    'SETTINGS_CHANGED': 'Settings Changed',
+  };
+  return titles[eventType] || eventType;
+};
 
 export function DeviceDetails() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [sessionPage, setSessionPage] = useState(1);
+  const [phonePage, setPhonePage] = useState(1);
+  const sessionsPerPage = 10;
+  const phonesPerPage = 5;
+  
+  const { data: device, isLoading, error } = useDeviceDetails(id);
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="p-6 border-b border-gray-200 bg-white">
+          <button
+            onClick={() => navigate('/devices')}
+            className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-sm">Back to Devices</span>
+          </button>
+          <Skeleton className="h-10 w-40 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="flex-1 p-6">
+          <Skeleton className="h-8 w-48 mb-4" />
+          <div className="grid grid-cols-3 gap-4">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !device) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center">
+        <p className="text-red-500 mb-4">Failed to load device details</p>
+        <button
+          onClick={() => navigate('/devices')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Devices
+        </button>
+      </div>
+    );
+  }
+
+  const lastUsedDate = device.lastConnected 
+    ? format(new Date(device.lastConnected), 'dd MMM yyyy')
+    : 'Never';
+
+  // Pagination calculations for sessions
+  const totalSessions = device.sessions?.length || 0;
+  const totalSessionPages = Math.ceil(totalSessions / sessionsPerPage);
+  const sessionStartIndex = (sessionPage - 1) * sessionsPerPage;
+  const sessionEndIndex = sessionStartIndex + sessionsPerPage;
+  const paginatedSessions = device.sessions?.slice(sessionStartIndex, sessionEndIndex) || [];
+
+  // Pagination calculations for phones
+  const totalPhones = device.therapistPhones?.length || 0;
+  const totalPhonePages = Math.ceil(totalPhones / phonesPerPage);
+  const phoneStartIndex = (phonePage - 1) * phonesPerPage;
+  const phoneEndIndex = phoneStartIndex + phonesPerPage;
+  const paginatedPhones = device.therapistPhones?.slice(phoneStartIndex, phoneEndIndex) || [];
 
   return (
     <div className="h-full flex flex-col">
@@ -70,11 +134,11 @@ export function DeviceDetails() {
         </button>
 
         <div>
-          <h1 className="text-3xl font-bold mb-2">D - 118</h1>
+          <h1 className="text-3xl font-bold mb-2">{device.deviceId}</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>Firmware version: v1.2.4</span>
+            <span>Firmware version: {device.firmwareVersion || 'N/A'}</span>
             <span>•</span>
-            <span>Firmware version: 26 Feb 2026</span>
+            <span>Last used: {lastUsedDate}</span>
           </div>
         </div>
       </div>
@@ -94,7 +158,7 @@ export function DeviceDetails() {
                   </div>
                   <p className="text-sm text-muted-foreground">Total Sessions</p>
                 </div>
-                <p className="text-3xl font-bold">124</p>
+                <p className="text-3xl font-bold">{device.statistics.totalSessions}</p>
               </CardContent>
             </Card>
 
@@ -104,9 +168,9 @@ export function DeviceDetails() {
                   <div className="p-2 bg-cyan-50 rounded-lg">
                     <Clock className="h-5 w-5 text-cyan-600" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Avg Session Dura...</p>
+                  <p className="text-sm text-muted-foreground">Avg Session Duration</p>
                 </div>
-                <p className="text-3xl font-bold">9m 20s</p>
+                <p className="text-3xl font-bold">{device.statistics.avgSessionDurationFormatted}</p>
               </CardContent>
             </Card>
 
@@ -118,7 +182,7 @@ export function DeviceDetails() {
                   </div>
                   <p className="text-sm text-muted-foreground">Phones Connected</p>
                 </div>
-                <p className="text-3xl font-bold">4</p>
+                <p className="text-3xl font-bold">{device.statistics.phonesConnected}</p>
               </CardContent>
             </Card>
           </div>
@@ -126,62 +190,140 @@ export function DeviceDetails() {
           {/* Session History */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Session History</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Session History ({totalSessions})
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
-                      <th className="pb-3 font-medium">Session ID</th>
-                      <th className="pb-3 font-medium">Phone ID</th>
-                      <th className="pb-3 font-medium">Patient Code</th>
-                      <th className="pb-3 font-medium">Session Timestamp</th>
-                      <th className="pb-3 font-medium">Duration</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {sessionHistory.map((session, index) => (
-                      <tr key={index} className="border-b border-gray-200 last:border-0">
-                        <td className="py-3">{session.id}</td>
-                        <td className="py-3">{session.phoneId}</td>
-                        <td className="py-3">{session.patientCode}</td>
-                        <td className="py-3 text-muted-foreground">{session.timestamp}</td>
-                        <td className="py-3">{session.duration}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {device.sessions && device.sessions.length > 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
+                          <th className="pb-3 font-medium">Session ID</th>
+                          <th className="pb-3 font-medium">Phone ID</th>
+                          <th className="pb-3 font-medium">Patient Code</th>
+                          <th className="pb-3 font-medium">Session Timestamp</th>
+                          <th className="pb-3 font-medium">Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {paginatedSessions.map((session) => (
+                          <tr key={session.id} className="border-b border-gray-200 last:border-0">
+                            <td className="py-3">{session.id.slice(0, 8)}...</td>
+                            <td className="py-3">
+                              {session.therapistPhone?.displayName || session.therapistPhone?.phoneNumber || 'N/A'}
+                            </td>
+                            <td className="py-3">{session.patient?.patientCode || 'N/A'}</td>
+                            <td className="py-3 text-muted-foreground">
+                              {formatTimestamp(session.sessionTimestamp)}
+                            </td>
+                            <td className="py-3">{formatDuration(session.duration)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {totalSessionPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {sessionStartIndex + 1} to {Math.min(sessionEndIndex, totalSessions)} of {totalSessions}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setSessionPage((prev) => Math.max(1, prev - 1))}
+                          disabled={sessionPage === 1}
+                          className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-3 py-1 text-sm">
+                          Page {sessionPage} of {totalSessionPages}
+                        </span>
+                        <button
+                          onClick={() => setSessionPage((prev) => Math.min(totalSessionPages, prev + 1))}
+                          disabled={sessionPage === totalSessionPages}
+                          className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No sessions found for this device
+                </p>
+              )}
             </CardContent>
           </Card>
 
           {/* Phone Connection History */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-semibold">Phone Connection History</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                Phone Connection History ({totalPhones})
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
-                      <th className="pb-3 font-medium">Phone ID</th>
-                      <th className="pb-3 font-medium">Sessions run</th>
-                      <th className="pb-3 font-medium">Last connected</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    {phoneConnectionHistory.map((phone, index) => (
-                      <tr key={index} className="border-b border-gray-200 last:border-0">
-                        <td className="py-3">{phone.phoneId}</td>
-                        <td className="py-3">{phone.sessionsRun}</td>
-                        <td className="py-3 text-muted-foreground">{phone.lastConnected}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {device.therapistPhones && device.therapistPhones.length > 0 ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
+                          <th className="pb-3 font-medium">Phone ID</th>
+                          <th className="pb-3 font-medium">Sessions run</th>
+                          <th className="pb-3 font-medium">Last connected</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {paginatedPhones.map((phone) => (
+                          <tr key={phone.id} className="border-b border-gray-200 last:border-0">
+                            <td className="py-3">{phone.displayName || phone.phoneNumber}</td>
+                            <td className="py-3">{phone.sessionsRun}</td>
+                            <td className="py-3 text-muted-foreground">
+                              {formatTimestamp(phone.lastConnected)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {totalPhonePages > 1 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Showing {phoneStartIndex + 1} to {Math.min(phoneEndIndex, totalPhones)} of {totalPhones}
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setPhonePage((prev) => Math.max(1, prev - 1))}
+                          disabled={phonePage === 1}
+                          className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-3 py-1 text-sm">
+                          Page {phonePage} of {totalPhonePages}
+                        </span>
+                        <button
+                          onClick={() => setPhonePage((prev) => Math.min(totalPhonePages, prev + 1))}
+                          disabled={phonePage === totalPhonePages}
+                          className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No phone connections found for this device
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -225,7 +367,7 @@ export function DeviceDetails() {
                       <Smartphone className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Device ID</p>
-                        <p className="text-xl font-semibold text-gray-900">D - 118</p>
+                        <p className="text-xl font-semibold text-gray-900">{device.deviceId}</p>
                       </div>
                     </div>
                   </div>
@@ -235,7 +377,9 @@ export function DeviceDetails() {
                       <Activity className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Firmware</p>
-                        <p className="text-xl font-semibold text-gray-900">v1.2.4</p>
+                        <p className="text-xl font-semibold text-gray-900">
+                          {device.firmwareVersion || 'N/A'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -245,7 +389,7 @@ export function DeviceDetails() {
                       <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Last used</p>
-                        <p className="text-xl font-semibold text-gray-900">26 Feb 2026</p>
+                        <p className="text-xl font-semibold text-gray-900">{lastUsedDate}</p>
                       </div>
                     </div>
                   </div>
@@ -254,27 +398,37 @@ export function DeviceDetails() {
             ) : (
               <>
                 <h3 className="font-semibold mb-6 text-lg">Timeline</h3>
-                <div className="space-y-8">
-                  {timelineEvents.map((event, index) => (
-                    <div key={index} className="relative flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-3 h-3 rounded-full border-2 border-blue-500 bg-white flex-shrink-0" />
-                        {index < timelineEvents.length - 1 && (
-                          <div className="w-0.5 flex-1 bg-gray-200 mt-2" />
-                        )}
-                      </div>
-                      <div className="flex-1 pb-6">
-                        <p className="text-sm text-gray-500 mb-2">{event.timestamp}</p>
-                        <h4 className="font-semibold text-gray-900 mb-3">{event.title}</h4>
-                        <div className="bg-gray-100 rounded-lg p-4">
-                          <p className="text-sm text-gray-900 leading-relaxed">
-                            {event.description}
+                {device.activityLogs && device.activityLogs.length > 0 ? (
+                  <div className="space-y-8">
+                    {device.activityLogs.map((event, index) => (
+                      <div key={event.id} className="relative flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-3 h-3 rounded-full border-2 border-blue-500 bg-white flex-shrink-0" />
+                          {index < device.activityLogs.length - 1 && (
+                            <div className="w-0.5 flex-1 bg-gray-200 mt-2" />
+                          )}
+                        </div>
+                        <div className="flex-1 pb-6">
+                          <p className="text-sm text-gray-500 mb-2">
+                            {formatTimelineTimestamp(event.timestamp)}
                           </p>
+                          <h4 className="font-semibold text-gray-900 mb-3">
+                            {getEventTitle(event.eventType)}
+                          </h4>
+                          <div className="bg-gray-100 rounded-lg p-4">
+                            <p className="text-sm text-gray-900 leading-relaxed">
+                              {event.description}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No activity logs available
+                  </p>
+                )}
               </>
             )}
           </div>

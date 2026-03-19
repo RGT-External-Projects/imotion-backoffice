@@ -252,10 +252,12 @@ export class DeviceService {
       .createQueryBuilder('device')
       .leftJoinAndSelect('device.therapistPhones', 'phone')
       .leftJoinAndSelect('device.sessions', 'session')
+      .leftJoinAndSelect('session.therapistPhone', 'sessionTherapistPhone')
+      .leftJoinAndSelect('session.patient', 'sessionPatient')
       .leftJoinAndSelect('device.activityLogs', 'log')
       .where('device.id = :id', { id })
       .orderBy('log.timestamp', 'DESC')
-      .addOrderBy('session.createdAt', 'DESC')
+      .addOrderBy('session.sessionTimestamp', 'DESC')
       .getOne();
 
     if (!device) {
@@ -271,9 +273,42 @@ export class DeviceService {
     
     const phonesConnected = device.therapistPhones?.length || 0;
 
-    // Return device with computed statistics
+    // Enrich therapist phones with session count and last connected time
+    const enrichedPhones = await Promise.all(
+      (device.therapistPhones || []).map(async (phone) => {
+        // Count sessions run by this phone on this device
+        const sessionCount = await this.dataSource
+          .getRepository('Session')
+          .createQueryBuilder('session')
+          .where('session.device_id = :deviceId', { deviceId: device.id })
+          .andWhere('session.therapist_phone_id = :phoneId', { phoneId: phone.id })
+          .getCount();
+
+        // Find last connection from activity logs
+        const lastConnectionLog = device.activityLogs
+          ?.filter(log => 
+            log.eventType === 'DEVICE_CONNECTED' && 
+            log.metadata?.therapistPhoneId === phone.id
+          )
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        return {
+          id: phone.id,
+          phoneNumber: phone.phoneNumber,
+          displayName: phone.displayName,
+          createdAt: phone.createdAt,
+          updatedAt: phone.updatedAt,
+          // Enriched fields for UI
+          sessionsRun: sessionCount,
+          lastConnected: lastConnectionLog?.timestamp || phone.updatedAt,
+        };
+      })
+    );
+
+    // Return device with computed statistics and enriched phones
     return {
       ...device,
+      therapistPhones: enrichedPhones,
       statistics: {
         totalSessions,
         avgSessionDuration,  // in seconds
