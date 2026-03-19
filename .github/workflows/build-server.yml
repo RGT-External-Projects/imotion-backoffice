@@ -145,37 +145,17 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "cd /home/ubuntu",
-              "aws ecr get-login-password --region ${{ vars.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
+              "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 330858616968.dkr.ecr.eu-central-1.amazonaws.com",
               "docker compose run --rm imotion-server npm run migration:run:prod",
               "docker compose pull imotion-server",
               "docker compose up -d imotion-server --force-recreate --no-deps",
               "echo 'Checking container health...'",
               "RETRIES=0",
               "MAX_RETRIES=60",
-              "while [ $RETRIES -lt $MAX_RETRIES ]; do",
-              "  STATE=$(docker inspect --format='{{.State.Status}}' imotion-server 2>/dev/null || echo 'missing')",
-              "  HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' imotion-server 2>/dev/null || echo 'missing')",
-              "  echo \"State: $STATE | Health: $HEALTH\"",
-              "  if [ \"$STATE\" = \"exited\" ] || [ \"$STATE\" = \"dead\" ]; then",
-              "    echo 'Container crashed:'",
-              "    docker compose logs --tail=50 imotion-server",
-              "    exit 1",
-              "  fi",
-              "  if [ \"$STATE\" = \"running\" ] && { [ \"$HEALTH\" = \"healthy\" ] || [ \"$HEALTH\" = \"none\" ]; }; then",
-              "    echo 'Service is up'",
-              "    break",
-              "  fi",
-              "  RETRIES=$((RETRIES+1))",
-              "  sleep 5",
-              "done",
-              "if [ $RETRIES -ge $MAX_RETRIES ]; then",
-              "  echo 'Health check timeout'",
-              "  docker compose logs --tail=50 imotion-server",
-              "  exit 1",
-              "fi",
+              "while [ $RETRIES -lt $MAX_RETRIES ]; do STATE=$(docker inspect --format='{{.State.Status}}' imotion-server); HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' imotion-server); echo \"State: $STATE | Health: $HEALTH\"; if [ \"$STATE\" = \"exited\" ] || [ \"$STATE\" = \"dead\" ]; then echo 'Container crashed'; docker compose logs --tail=50 imotion-server; exit 1; fi; if [[ \"$STATE\" = \"running\" && ( \"$HEALTH\" = \"healthy\" || \"$HEALTH\" = \"none\" ) ]]; then echo 'Service is up'; break; fi; RETRIES=$((RETRIES+1)); sleep 5; done",
+              "if [ $RETRIES -ge $MAX_RETRIES ]; then echo 'Health check timeout'; docker compose logs --tail=50 imotion-server; exit 1; fi",
               "echo 'Cleanup...'",
               "docker image prune -af"
-
             ]' \
             --query "Command.CommandId" \
             --output text)
