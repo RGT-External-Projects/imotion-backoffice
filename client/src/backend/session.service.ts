@@ -2,22 +2,26 @@ import api from './api.service';
 
 export interface SessionSettings {
   visual: {
-    enabled: boolean;
-    color: string;
-    speed: number;
-    movement: string;
+    contrast: number;
+    colorMode: string;
+    brightness: number;
   };
-  vibration: {
-    enabled: boolean;
+  tactile: {
+    pattern: string;
     intensity: number;
-    pulse: string;
-    speed: number;
   };
   audio: {
-    enabled: boolean;
-    volume?: number;
-    type?: string;
+    volume: number;
+    soundType: string;
   };
+}
+
+export interface SessionActivityLog {
+  id: string;
+  eventType: string;
+  description: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
 }
 
 export interface Session {
@@ -34,16 +38,22 @@ export interface Session {
   updatedAt: string;
   device?: {
     id: string;
+    deviceId: string;
     deviceName: string;
   };
   therapistPhone?: {
     id: string;
     phoneNumber: string;
+    displayName: string;
   };
   patient?: {
     id: string;
-    patientIdentifier: string;
+    patientCode: string;
   };
+}
+
+export interface SessionDetails extends Session {
+  activityLogs: SessionActivityLog[];
 }
 
 export interface SessionQueryParams {

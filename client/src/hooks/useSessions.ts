@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { sessionService, type Session, type SessionQueryParams } from '@/backend/session.service';
+import { sessionService, type Session, type SessionDetails, type SessionQueryParams } from '@/backend/session.service';
 
 // Query keys
 export const sessionKeys = {
@@ -20,13 +20,13 @@ export const useSessions = (params?: SessionQueryParams) => {
   });
 };
 
-// Get single session by ID
+// Get single session by ID (returns SessionDetails with activity logs)
 export const useSession = (id: string) => {
-  return useQuery({
+  return useQuery<SessionDetails>({
     queryKey: sessionKeys.detail(id),
     queryFn: async () => {
       const response = await sessionService.getById(id);
-      return response.data;
+      return response.data as SessionDetails;
     },
     enabled: !!id,
   });
