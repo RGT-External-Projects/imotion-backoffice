@@ -1,15 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { deviceService } from '@/backend/device.service';
+import { deviceService, type DeviceQueryParams } from '@/backend/device.service';
 
 // Query keys
 export const deviceKeys = {
   all: ['devices'] as const,
+  paginated: (filters?: DeviceQueryParams) => ['devices', 'paginated', filters] as const,
   detail: (id: string) => ['devices', id] as const,
   byTherapist: (therapistId: string) => ['devices', 'therapist', therapistId] as const,
 };
 
-// Get all devices
-export const useDevices = () => {
+// Get all devices (legacy - without pagination)
+export const useAllDevices = () => {
   return useQuery({
     queryKey: deviceKeys.all,
     queryFn: async () => {
@@ -19,12 +20,35 @@ export const useDevices = () => {
   });
 };
 
-// Get single device by ID
+// Get devices with pagination and filters
+export const useDevices = (filters?: DeviceQueryParams) => {
+  return useQuery({
+    queryKey: deviceKeys.paginated(filters),
+    queryFn: async () => {
+      const response = await deviceService.getAllPaginated(filters);
+      return response.data;
+    },
+  });
+};
+
+// Get single device by ID (basic info)
 export const useDevice = (id: string) => {
   return useQuery({
     queryKey: deviceKeys.detail(id),
     queryFn: async () => {
       const response = await deviceService.getById(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
+// Get device details with all related data (sessions, activity logs, therapist phones, statistics)
+export const useDeviceDetails = (id: string | undefined) => {
+  return useQuery({
+    queryKey: deviceKeys.detail(id!),
+    queryFn: async () => {
+      const response = await deviceService.getById(id!);
       return response.data;
     },
     enabled: !!id,

@@ -61,26 +61,26 @@ export class AnalyticsChartsService {
       .leftJoinAndSelect('session.device', 'device')
       .select('session.deviceId', 'deviceId')
       .addSelect('device.deviceName', 'deviceName')
-      .addSelect('COUNT(*)', 'sessionCount')
+      .addSelect('COUNT(*)', 'sessioncount')
       .groupBy('session.deviceId')
       .addGroupBy('device.deviceName')
-      .orderBy('sessionCount', 'DESC')
+      .orderBy('sessioncount', 'DESC')
       .limit(filters.limit || 5)
       .getRawMany();
 
     // Calculate total sessions for percentage
     const totalSessions = results.reduce(
-      (sum, row) => sum + parseInt(row.sessionCount),
+      (sum, row) => sum + parseInt(row.sessioncount),
       0,
     );
 
     const devices = results.map((row) => ({
       deviceId: row.deviceId,
       deviceName: row.deviceName || 'Unknown Device',
-      sessionCount: parseInt(row.sessionCount),
+      sessionCount: parseInt(row.sessioncount),
       usagePercentage:
         totalSessions > 0
-          ? Math.round((parseInt(row.sessionCount) / totalSessions) * 100)
+          ? Math.round((parseInt(row.sessioncount) / totalSessions) * 100)
           : 0,
     }));
 
@@ -102,7 +102,7 @@ export class AnalyticsChartsService {
 
     let visualCount = 0;
     let audioCount = 0;
-    let tactileCount = 0;
+    let vibrationCount = 0;
     const total = sessions.length;
 
     sessions.forEach((session) => {
@@ -112,13 +112,13 @@ export class AnalyticsChartsService {
 
       if (stimuli.includes('Visual')) visualCount++;
       if (stimuli.includes('Audio')) audioCount++;
-      if (stimuli.includes('Vibration')) tactileCount++;
+      if (stimuli.includes('Vibration')) vibrationCount++;
     });
 
     return {
       visual: total > 0 ? Math.round((visualCount / total) * 100) : 0,
       audio: total > 0 ? Math.round((audioCount / total) * 100) : 0,
-      tactile: total > 0 ? Math.round((tactileCount / total) * 100) : 0,
+      vibration: total > 0 ? Math.round((vibrationCount / total) * 100) : 0,
     };
   }
 
@@ -173,16 +173,16 @@ export class AnalyticsChartsService {
       .leftJoinAndSelect('session.therapistPhone', 'therapistPhone')
       .select('session.therapistPhoneId', 'therapistPhoneId')
       .addSelect('therapistPhone.phoneNumber', 'phoneNumber')
-      .addSelect('COUNT(*)', 'sessionCount')
+      .addSelect('COUNT(*)', 'sessioncount')
       .groupBy('session.therapistPhoneId')
       .addGroupBy('therapistPhone.phoneNumber')
-      .orderBy('sessionCount', 'DESC')
+      .orderBy('sessioncount', 'DESC')
       .getRawMany();
 
     const therapists = results.map((row, index) => ({
       therapistPhoneId: row.therapistPhoneId,
       displayName: row.phoneNumber || `Therapist ${index + 1}`,
-      sessionCount: parseInt(row.sessionCount),
+      sessionCount: parseInt(row.sessioncount),
     }));
 
     return { therapists };

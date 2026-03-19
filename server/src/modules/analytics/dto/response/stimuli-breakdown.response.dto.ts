@@ -14,8 +14,8 @@ export class StimuliBreakdownResponseDto {
   audio: number;
 
   @ApiProperty({
-    description: 'Percentage of sessions using tactile stimuli',
+    description: 'Percentage of sessions using vibration stimuli',
     example: 20,
   })
-  tactile: number;
+  vibration: number;
 }

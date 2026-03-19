@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Like, Between, FindOptionsWhere } from 'typeorm';
 import { Session, SessionStatus, SessionSettings } from './entities/session.entity';
 import { SessionActivityLogService } from '../session-activity-log/session-activity-log.service';
 import { SessionActivityEventType } from '../session-activity-log/entities/session-activity-log.entity';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CompleteSessionDto } from './dto/complete-session.dto';
 import { InterruptSessionDto } from './dto/interrupt-session.dto';
+import { QuerySessionsDto } from './dto/query-sessions.dto';
+import { PaginatedSessionsResponseDto } from './dto/paginated-sessions.response.dto';
 
 @Injectable()
 export class SessionService {
@@ -51,6 +53,127 @@ export class SessionService {
       relations: ['device', 'therapistPhone', 'patient'],
       order: { sessionTimestamp: 'DESC' },
     });
+  }
+
+  async findAllPaginated(query: QuerySessionsDto): Promise<PaginatedSessionsResponseDto> {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: FindOptionsWhere<Session> = {};
+
+    // Filter by status
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    // Filter by device
+    if (query.deviceId) {
+      where.deviceId = query.deviceId;
+    }
+
+    // Filter by therapist phone
+    if (query.therapistPhoneId) {
+      where.therapistPhoneId = query.therapistPhoneId;
+    }
+
+    // Filter by patient
+    if (query.patientId) {
+      where.patientId = query.patientId;
+    }
+
+    // Filter by date range
+    if (query.startDate && query.endDate) {
+      where.sessionTimestamp = Between(
+        new Date(query.startDate),
+        new Date(query.endDate),
+      );
+    } else if (query.startDate) {
+      where.sessionTimestamp = Between(
+        new Date(query.startDate),
+        new Date('2100-01-01'), // Far future date
+      );
+    } else if (query.endDate) {
+      where.sessionTimestamp = Between(
+        new Date('1970-01-01'), // Far past date
+        new Date(query.endDate),
+      );
+    }
+
+    // Create query builder for search functionality
+    const queryBuilder = this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.device', 'device')
+      .leftJoinAndSelect('session.therapistPhone', 'therapistPhone')
+      .leftJoinAndSelect('session.patient', 'patient')
+      .orderBy('session.sessionTimestamp', 'DESC');
+
+    // Apply filters from where clause
+    if (query.status) {
+      queryBuilder.andWhere('session.status = :status', { status: query.status });
+    }
+    if (query.deviceId) {
+      queryBuilder.andWhere('session.deviceId = :deviceId', { deviceId: query.deviceId });
+    }
+    if (query.therapistPhoneId) {
+      queryBuilder.andWhere('session.therapistPhoneId = :therapistPhoneId', { 
+        therapistPhoneId: query.therapistPhoneId 
+      });
+    }
+    if (query.patientId) {
+      queryBuilder.andWhere('session.patientId = :patientId', { patientId: query.patientId });
+    }
+    if (query.startDate && query.endDate) {
+      queryBuilder.andWhere('session.sessionTimestamp BETWEEN :startDate AND :endDate', {
+        startDate: new Date(query.startDate),
+        endDate: new Date(query.endDate),
+      });
+    } else if (query.startDate) {
+      queryBuilder.andWhere('session.sessionTimestamp >= :startDate', {
+        startDate: new Date(query.startDate),
+      });
+    } else if (query.endDate) {
+      queryBuilder.andWhere('session.sessionTimestamp <= :endDate', {
+        endDate: new Date(query.endDate),
+      });
+    }
+
+    // Apply search filter (search in session ID, phone number, device name)
+    // Note: Cast UUID to text for ILIKE comparison in PostgreSQL
+    // ILIKE is case-insensitive version of LIKE
+    if (query.search) {
+      queryBuilder.andWhere(
+        '(CAST(session.id AS TEXT) ILIKE :search OR device.deviceName ILIKE :search OR therapistPhone.phoneNumber ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
+
+    // Get total count
+    const totalItems = await queryBuilder.getCount();
+
+    // Apply pagination
+    const data = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getMany();
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      data,
+      meta: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Session> {
@@ -195,5 +318,64 @@ export class SessionService {
     }
 
     current[keys[keys.length - 1]] = value;
+  }
+
+  private getNestedValue(obj: any, path: string): any {
+    const keys = path.split('.');
+    let current = obj;
+
+    for (const key of keys) {
+      if (current === undefined || current === null) {
+        return undefined;
+      }
+      current = current[key];
+    }
+
+    return current;
+  }
+
+  /**
+   * Smart activity log creation - auto-fills missing fields for SETTINGS_CHANGED events
+   */
+  async createActivityLogSmart(sessionId: string, dto: any): Promise<any> {
+    let description = dto.description;
+    let metadata = dto.metadata || {};
+
+    // Auto-generate for SETTINGS_CHANGED if missing fields
+    if (dto.eventType === SessionActivityEventType.SETTINGS_CHANGED) {
+      const settingPath = metadata.settingPath;
+      const newValue = metadata.newValue;
+
+      if (settingPath && newValue !== undefined) {
+        // Get oldValue if missing
+        if (metadata.oldValue === undefined) {
+          const session = await this.findOne(sessionId);
+          
+          // Try to get from most recent activity log first
+          const settingsChanges = await this.activityLogService.findSettingsChanges(sessionId);
+          const lastChange = settingsChanges.find(log => log.metadata?.settingPath === settingPath);
+          
+          if (lastChange && lastChange.metadata?.newValue !== undefined) {
+            metadata.oldValue = lastChange.metadata.newValue;
+          } else {
+            // Fallback to initialSettings
+            metadata.oldValue = this.getNestedValue(session.initialSettings, settingPath);
+          }
+        }
+
+        // Generate description if missing
+        if (!description) {
+          description = `Changed ${settingPath} from ${metadata.oldValue} to ${newValue}`;
+        }
+      }
+    }
+
+    // Create activity log with completed data
+    return this.activityLogService.create(
+      sessionId,
+      dto.eventType,
+      description || 'Activity logged',
+      metadata,
+    );
   }
 }

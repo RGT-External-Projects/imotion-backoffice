@@ -1,65 +1,37 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { sessionService, type Session } from '@/backend/session.service';
+import { sessionService, type SessionDetails, type SessionQueryParams } from '@/backend/session.service';
 
 // Query keys
 export const sessionKeys = {
   all: ['sessions'] as const,
+  list: (params?: SessionQueryParams) => ['sessions', 'list', params] as const,
   detail: (id: string) => ['sessions', id] as const,
   byTherapist: (therapistId: string) => ['sessions', 'therapist', therapistId] as const,
 };
 
-// Get all sessions
-export const useSessions = () => {
+// Get all sessions with pagination and filtering
+export const useSessions = (params?: SessionQueryParams) => {
   return useQuery({
-    queryKey: sessionKeys.all,
+    queryKey: sessionKeys.list(params),
     queryFn: async () => {
-      const response = await sessionService.getAll();
+      const response = await sessionService.getAll(params);
       return response.data;
     },
   });
 };
 
-// Get single session by ID
+// Get single session by ID (returns SessionDetails with activity logs)
 export const useSession = (id: string) => {
-  return useQuery({
+  return useQuery<SessionDetails>({
     queryKey: sessionKeys.detail(id),
     queryFn: async () => {
       const response = await sessionService.getById(id);
-      return response.data;
+      return response.data as SessionDetails;
     },
     enabled: !!id,
   });
 };
 
-// Get sessions by therapist
-export const useSessionsByTherapist = (therapistId: string) => {
-  return useQuery({
-    queryKey: sessionKeys.byTherapist(therapistId),
-    queryFn: async () => {
-      const response = await sessionService.getByTherapist(therapistId);
-      return response.data;
-    },
-    enabled: !!therapistId,
-  });
-};
-
-// Create session mutation
-export const useCreateSession = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const response = await sessionService.create(data);
-      return response.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
-      queryClient.invalidateQueries({ 
-        queryKey: sessionKeys.byTherapist(variables.therapistId) 
-      });
-    },
-  });
-};
 
 // Delete session mutation
 export const useDeleteSession = () => {
@@ -70,7 +42,8 @@ export const useDeleteSession = () => {
       await sessionService.delete(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sessionKeys.all });
+      // Invalidate all session list queries
+      queryClient.invalidateQueries({ queryKey: ['sessions', 'list'] });
     },
   });
 };

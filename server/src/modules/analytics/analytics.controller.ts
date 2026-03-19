@@ -161,7 +161,7 @@ export class AnalyticsController {
   @ApiOperation({
     summary: 'Get stimuli breakdown',
     description:
-      'Returns percentage breakdown of stimuli types (visual, audio, tactile) used in sessions. Extracts stimuli from session initialSettings.',
+      'Returns percentage breakdown of stimuli types (visual, audio, vibration) used in sessions. Extracts stimuli from session initialSettings.',
   })
   @ApiQuery({
     name: 'month',

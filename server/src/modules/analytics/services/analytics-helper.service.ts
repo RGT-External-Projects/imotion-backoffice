@@ -121,8 +121,8 @@ export class AnalyticsHelperService {
       stimuli.push('Audio');
     }
 
-    if (initialSettings.tactile || initialSettings.vibration) {
-      stimuli.push('Vibration');
+    if (initialSettings.vibration || initialSettings.tactile) {
+      stimuli.push('Vibration'); // Fallback for old data with "tactile"
     }
 
     return stimuli;

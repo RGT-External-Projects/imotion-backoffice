@@ -10,6 +10,8 @@ import { RegisterDeviceDto } from './dto/register-device.dto';
 import { ConnectDeviceDto } from './dto/connect-device.dto';
 import { UpdateFirmwareDto } from './dto/update-firmware.dto';
 import { PairPhoneDto } from './dto/pair-phone.dto';
+import { QueryDevicesDto } from './dto/query-devices.dto';
+import { PaginatedDevicesResponseDto } from './dto/paginated-devices.response.dto';
 
 @Injectable()
 export class DeviceService {
@@ -67,7 +69,125 @@ export class DeviceService {
   }
 
   /**
-   * Get all devices with enriched data for UI
+   * Get all devices with pagination, filtering, and search
+   */
+  async findAllPaginated(query: QueryDevicesDto): Promise<PaginatedDevicesResponseDto> {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    // Create query builder
+    const queryBuilder = this.deviceRepository
+      .createQueryBuilder('device')
+      .leftJoin('device.sessions', 'session')
+      .leftJoin('device.activityLogs', 'log')
+      .select([
+        'device.id',
+        'device.deviceId',
+        'device.deviceName',
+        'device.serialNumber',
+        'device.isActive',
+        'device.firmwareVersion',
+        'device.lastConnected',
+        'device.createdAt',
+        'device.updatedAt',
+      ])
+      .addSelect('COUNT(DISTINCT session.id)', 'sessionCount')
+      .groupBy('device.id');
+
+    // Apply filters
+    if (query.isActive !== undefined) {
+      queryBuilder.andWhere('device.isActive = :isActive', { isActive: query.isActive });
+    }
+
+    if (query.firmwareVersion) {
+      queryBuilder.andWhere('device.firmwareVersion = :firmwareVersion', { 
+        firmwareVersion: query.firmwareVersion 
+      });
+    }
+
+    // Apply search (case-insensitive)
+    if (query.search) {
+      queryBuilder.andWhere(
+        '(CAST(device.id AS TEXT) ILIKE :search OR device.deviceId ILIKE :search OR device.deviceName ILIKE :search OR device.serialNumber ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
+
+    // Order by creation date
+    queryBuilder.orderBy('device.createdAt', 'DESC');
+
+    // Get total count
+    const totalItems = await queryBuilder.getCount();
+
+    // Apply pagination
+    const devices = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getRawAndEntities();
+
+    // Enrich devices with additional data
+    const enrichedDevices = await Promise.all(
+      devices.entities.map(async (device, index) => {
+        const sessionCount = parseInt(devices.raw[index].sessionCount) || 0;
+
+        // Get last connected therapist phone from activity logs
+        const lastConnectionLog = await this.dataSource
+          .getRepository('DeviceActivityLog')
+          .createQueryBuilder('log')
+          .where('log.device_id = :deviceId', { deviceId: device.id })
+          .andWhere('log.event_type = :eventType', { eventType: 'DEVICE_CONNECTED' })
+          .orderBy('log.timestamp', 'DESC')
+          .limit(1)
+          .getRawOne();
+
+        let lastConnectedPhone: TherapistPhone | null = null;
+        if (lastConnectionLog && lastConnectionLog.log_metadata?.therapistPhoneId) {
+          lastConnectedPhone = await this.therapistPhoneRepository.findOne({
+            where: { id: lastConnectionLog.log_metadata.therapistPhoneId },
+          });
+        }
+
+        return {
+          id: device.id,
+          deviceId: device.deviceId,
+          deviceName: device.deviceName,
+          serialNumber: device.serialNumber,
+          isActive: device.isActive,
+          firmwareVersion: device.firmwareVersion,
+          lastConnected: device.lastConnected,
+          createdAt: device.createdAt,
+          updatedAt: device.updatedAt,
+          sessionCount,
+          lastConnectedPhone: lastConnectedPhone ? {
+            id: lastConnectedPhone.id,
+            phoneNumber: lastConnectedPhone.phoneNumber,
+            displayName: lastConnectedPhone.displayName,
+          } : null,
+        };
+      })
+    );
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalItems / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return {
+      data: enrichedDevices,
+      meta: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage,
+      },
+    };
+  }
+
+  /**
+   * Get all devices with enriched data for UI (Legacy - for backward compatibility)
    * Returns: device info + session count + last connected phone
    */
   async findAll(): Promise<any[]> {
@@ -132,10 +252,12 @@ export class DeviceService {
       .createQueryBuilder('device')
       .leftJoinAndSelect('device.therapistPhones', 'phone')
       .leftJoinAndSelect('device.sessions', 'session')
+      .leftJoinAndSelect('session.therapistPhone', 'sessionTherapistPhone')
+      .leftJoinAndSelect('session.patient', 'sessionPatient')
       .leftJoinAndSelect('device.activityLogs', 'log')
       .where('device.id = :id', { id })
       .orderBy('log.timestamp', 'DESC')
-      .addOrderBy('session.createdAt', 'DESC')
+      .addOrderBy('session.sessionTimestamp', 'DESC')
       .getOne();
 
     if (!device) {
@@ -151,9 +273,42 @@ export class DeviceService {
     
     const phonesConnected = device.therapistPhones?.length || 0;
 
-    // Return device with computed statistics
+    // Enrich therapist phones with session count and last connected time
+    const enrichedPhones = await Promise.all(
+      (device.therapistPhones || []).map(async (phone) => {
+        // Count sessions run by this phone on this device
+        const sessionCount = await this.dataSource
+          .getRepository('Session')
+          .createQueryBuilder('session')
+          .where('session.device_id = :deviceId', { deviceId: device.id })
+          .andWhere('session.therapist_phone_id = :phoneId', { phoneId: phone.id })
+          .getCount();
+
+        // Find last connection from activity logs
+        const lastConnectionLog = device.activityLogs
+          ?.filter(log => 
+            log.eventType === 'DEVICE_CONNECTED' && 
+            log.metadata?.therapistPhoneId === phone.id
+          )
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+        return {
+          id: phone.id,
+          phoneNumber: phone.phoneNumber,
+          displayName: phone.displayName,
+          createdAt: phone.createdAt,
+          updatedAt: phone.updatedAt,
+          // Enriched fields for UI
+          sessionsRun: sessionCount,
+          lastConnected: lastConnectionLog?.timestamp || phone.updatedAt,
+        };
+      })
+    );
+
+    // Return device with computed statistics and enriched phones
     return {
       ...device,
+      therapistPhones: enrichedPhones,
       statistics: {
         totalSessions,
         avgSessionDuration,  // in seconds

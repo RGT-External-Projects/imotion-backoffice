@@ -25,12 +25,13 @@ export class CreateActivityLogDto {
   @IsEnum(SessionActivityEventType)
   eventType: SessionActivityEventType;
 
-  @ApiProperty({
-    description: 'Human-readable description of the event',
+  @ApiPropertyOptional({
+    description: 'Human-readable description of the event (optional - auto-generated for SETTINGS_CHANGED if not provided)',
     example: 'Increased vibration intensity from 50 to 70',
   })
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @ApiPropertyOptional({
     description: 'Additional event metadata (flexible JSON object). For SETTINGS_CHANGED, include settingPath for auto-computation of finalSettings',
