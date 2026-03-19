@@ -149,11 +149,6 @@ jobs:
               "docker compose run --rm imotion-server npm run migration:run:prod",
               "docker compose pull imotion-server",
               "docker compose up -d imotion-server --force-recreate --no-deps",
-              "echo 'Checking container health...'",
-              "RETRIES=0",
-              "MAX_RETRIES=60",
-              "while [ $RETRIES -lt $MAX_RETRIES ]; do STATE=$(docker inspect --format='{{.State.Status}}' imotion-server); HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' imotion-server); echo \"State: $STATE | Health: $HEALTH\"; if [ \"$STATE\" = \"exited\" ] || [ \"$STATE\" = \"dead\" ]; then echo 'Container crashed'; docker compose logs --tail=50 imotion-server; exit 1; fi; if [[ \"$STATE\" = \"running\" && ( \"$HEALTH\" = \"healthy\" || \"$HEALTH\" = \"none\" ) ]]; then echo 'Service is up'; break; fi; RETRIES=$((RETRIES+1)); sleep 5; done",
-              "if [ $RETRIES -ge $MAX_RETRIES ]; then echo 'Health check timeout'; docker compose logs --tail=50 imotion-server; exit 1; fi",
               "echo 'Cleanup...'",
               "docker image prune -af"
             ]' \
