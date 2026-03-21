@@ -1,18 +1,33 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
+import { useStimuliBreakdown, type AnalyticsFilters } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StimuliCombinationChartProps {
   hasData: boolean;
+  filters?: AnalyticsFilters;
 }
 
-const stimuliCombinationData = [
-  { name: 'All Three', value: 40, color: '#2563eb' },
-  { name: 'Visual + Audio', value: 31, color: '#3b82f6' },
-  { name: 'Visual + Vibration', value: 19, color: '#60a5fa' },
-  { name: 'Vibration + Audio', value: 10, color: '#93c5fd' },
-];
+export const StimuliCombinationChart = memo(function StimuliCombinationChart({ hasData, filters }: StimuliCombinationChartProps) {
+  // Fetch real data from API
+  const { data: stimuliData, isLoading } = useStimuliBreakdown(filters);
 
-export function StimuliCombinationChart({ hasData }: StimuliCombinationChartProps) {
-  if (!hasData) {
+  // Transform API data for bar chart
+  const chartData = stimuliData ? [
+    { name: 'Visual', value: stimuliData.visual, color: '#2563eb' },
+    { name: 'Audio', value: stimuliData.audio, color: '#8b5cf6' },
+    { name: 'Vibration', value: stimuliData.vibration, color: '#22c55e' },
+  ] : [];
+
+  if (isLoading) {
+    return (
+      <div className="h-[280px] space-y-3">
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+
+  if (!hasData || chartData.length === 0) {
     return (
       <div className="h-[280px] flex items-center justify-center">
         <p className="text-sm text-muted-foreground">No data available</p>
@@ -23,7 +38,7 @@ export function StimuliCombinationChart({ hasData }: StimuliCombinationChartProp
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart 
-        data={stimuliCombinationData} 
+        data={chartData} 
         layout="vertical"
         margin={{ top: 5, right: 50, left: 0, bottom: 5 }}
       >
@@ -42,13 +57,7 @@ export function StimuliCombinationChart({ hasData }: StimuliCombinationChartProp
           tick={{ fontSize: 14, fill: '#1f2937' }}
           axisLine={false}
           tickLine={false}
-          width={140}
-          label={{ 
-            value: 'Stimuli combinations', 
-            angle: -90, 
-            position: 'insideLeft',
-            style: { fontSize: 12, fill: '#6b7280' }
-          }}
+          width={100}
         />
         <Bar 
           dataKey="value" 
@@ -76,11 +85,11 @@ export function StimuliCombinationChart({ hasData }: StimuliCombinationChartProp
             }
           }}
         >
-          {stimuliCombinationData.map((entry, index) => (
+          {chartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

@@ -83,19 +83,25 @@ export class AnalyticsStatsService {
       .getRawOne();
 
     // Calculate average duration with filters
-    queryBuilder = this.sessionRepository.createQueryBuilder('session');
-    queryBuilder = this.helperService.applyFilters(queryBuilder, filters);
-    const avgDuration = await queryBuilder
-      .select('AVG(session.duration)', 'avg')
-      .where('session.duration IS NOT NULL')
-      .getRawOne();
+    // If no sessions, return "0m" immediately
+    let avgSessionDuration = '0m';
+    if (totalSessions > 0) {
+      queryBuilder = this.sessionRepository.createQueryBuilder('session');
+      queryBuilder = this.helperService.applyFilters(queryBuilder, filters);
+      const avgDuration = await queryBuilder
+        .select('AVG(session.duration)', 'avg')
+        .andWhere('session.duration IS NOT NULL')  // FIX: Use andWhere instead of where
+        .getRawOne();
+
+      avgSessionDuration = this.helperService.formatDuration(
+        avgDuration.avg || 0,
+      );
+    }
 
     return {
       totalSessions,
       activeDevices: parseInt(activeDevicesResult.count) || 0,
-      avgSessionDuration: this.helperService.formatDuration(
-        avgDuration.avg || 0,
-      ),
+      avgSessionDuration,
     };
   }
 }

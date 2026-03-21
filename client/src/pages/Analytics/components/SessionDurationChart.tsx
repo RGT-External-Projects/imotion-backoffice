@@ -1,19 +1,30 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { Clock } from 'lucide-react';
+import { useSessionDurationDistribution, type AnalyticsFilters } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SessionDurationChartProps {
   hasData: boolean;
+  filters?: AnalyticsFilters;
 }
 
-const durationData = [
-  { duration: '0 - 5m', count: 52, percentage: 52 },
-  { duration: '5 - 10m', count: 54, percentage: 54 },
-  { duration: '10 - 15m', count: 85, percentage: 85 },
-  { duration: '15 - 25m', count: 53, percentage: 53 },
-  { duration: '25m+', count: 88, percentage: 88 },
-];
+export const SessionDurationChart = memo(function SessionDurationChart({ hasData, filters }: SessionDurationChartProps) {
+  const { data: durationData, isLoading } = useSessionDurationDistribution(filters);
 
-export function SessionDurationChart({ hasData }: SessionDurationChartProps) {
+  const chartData = durationData?.buckets?.map((item: any) => ({
+    duration: item.range,
+    count: item.count,
+  })) || [];
+
+  if (isLoading) {
+    return (
+      <div className="h-[280px] space-y-3">
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+
   if (!hasData) {
     return (
       <div className="h-[280px] flex flex-col items-center justify-center">
@@ -28,7 +39,7 @@ export function SessionDurationChart({ hasData }: SessionDurationChartProps) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart 
-        data={durationData}
+        data={chartData}
         margin={{ top: 5, right: 20, left: 0, bottom: 20 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -42,12 +53,9 @@ export function SessionDurationChart({ hasData }: SessionDurationChartProps) {
           tick={{ fontSize: 12, fill: '#9ca3af' }}
           axisLine={false}
           tickLine={false}
-          domain={[0, 100]}
-          ticks={[0, 25, 50, 75, 100]}
-          tickFormatter={(value) => `${value}%`}
         />
         <Bar 
-          dataKey="percentage" 
+          dataKey="count" 
           fill="#10b981" 
           radius={[4, 4, 0, 0]} 
           barSize={60}
@@ -55,4 +63,4 @@ export function SessionDurationChart({ hasData }: SessionDurationChartProps) {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

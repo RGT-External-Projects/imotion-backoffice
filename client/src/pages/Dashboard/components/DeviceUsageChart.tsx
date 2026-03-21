@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface DeviceUsageChartProps {
   hasData: boolean;
+  limit?: number;
 }
 
 // Custom tick component to handle long device names
@@ -32,9 +33,9 @@ const CustomYAxisTick = (props: any) => {
   );
 };
 
-export function DeviceUsageChart({ hasData }: DeviceUsageChartProps) {
-  // Fetch device usage data - will add limit filter later
-  const { data: deviceUsageData, isLoading } = useDeviceUsage({ limit: 5 });
+export function DeviceUsageChart({ hasData, limit = 5 }: DeviceUsageChartProps) {
+  // Fetch device usage data with limit
+  const { data: deviceUsageData, isLoading } = useDeviceUsage({ limit });
   
   // Transform API data to chart format
   const chartData = deviceUsageData?.devices.map(device => ({
