@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { Clock } from 'lucide-react';
 import { useSessionDurationDistribution, type AnalyticsFilters } from '@/hooks/useAnalytics';
@@ -8,7 +9,7 @@ interface SessionDurationChartProps {
   filters?: AnalyticsFilters;
 }
 
-export function SessionDurationChart({ hasData, filters }: SessionDurationChartProps) {
+export const SessionDurationChart = memo(function SessionDurationChart({ hasData, filters }: SessionDurationChartProps) {
   const { data: durationData, isLoading } = useSessionDurationDistribution(filters);
 
   const chartData = durationData?.buckets?.map((item: any) => ({
@@ -62,4 +63,4 @@ export function SessionDurationChart({ hasData, filters }: SessionDurationChartP
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

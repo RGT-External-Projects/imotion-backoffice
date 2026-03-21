@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
 import { useStimuliBreakdown, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,7 +8,7 @@ interface StimuliCombinationChartProps {
   filters?: AnalyticsFilters;
 }
 
-export function StimuliCombinationChart({ hasData, filters }: StimuliCombinationChartProps) {
+export const StimuliCombinationChart = memo(function StimuliCombinationChart({ hasData, filters }: StimuliCombinationChartProps) {
   // Fetch real data from API
   const { data: stimuliData, isLoading } = useStimuliBreakdown(filters);
 
@@ -91,4 +92,4 @@ export function StimuliCombinationChart({ hasData, filters }: StimuliCombination
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Smartphone } from 'lucide-react';
 import { useTherapistActivity, type AnalyticsFilters } from '@/hooks/useAnalytics';
@@ -8,7 +9,7 @@ interface PhoneSessionsChartProps {
   filters?: AnalyticsFilters;
 }
 
-export function PhoneSessionsChart({ hasData, filters }: PhoneSessionsChartProps) {
+export const PhoneSessionsChart = memo(function PhoneSessionsChart({ hasData, filters }: PhoneSessionsChartProps) {
   const { data: therapistData, isLoading } = useTherapistActivity(filters);
   
   const phoneSessionData = therapistData?.therapists?.slice(0, 5).map((therapist: any) => {
@@ -109,4 +110,4 @@ export function PhoneSessionsChart({ hasData, filters }: PhoneSessionsChartProps
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

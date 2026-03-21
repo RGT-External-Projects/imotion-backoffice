@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useSessionsOverTime, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -7,7 +8,7 @@ interface SessionOverTimeChartProps {
   filters?: AnalyticsFilters;
 }
 
-export function SessionOverTimeChart({ hasData, filters }: SessionOverTimeChartProps) {
+export const SessionOverTimeChart = memo(function SessionOverTimeChart({ hasData, filters }: SessionOverTimeChartProps) {
   // Fetch sessions over time data with filters
   const { data: sessionsData, isLoading } = useSessionsOverTime(filters);
   
@@ -82,4 +83,4 @@ export function SessionOverTimeChart({ hasData, filters }: SessionOverTimeChartP
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});

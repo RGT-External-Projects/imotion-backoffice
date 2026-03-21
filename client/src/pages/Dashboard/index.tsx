@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,13 @@ import AverageSessionIcon from '@/assets/average-session.svg';
 export function Dashboard() {
   const navigate = useNavigate();
   
+  // Sessions Over Time filter state
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  
+  // Device Usage filter state
+  const [deviceLimit, setDeviceLimit] = useState<number>(5);
+  
   // Fetch dashboard stats from API
   const { data: stats, isLoading, isError } = useDashboardStats();
   
@@ -29,6 +37,52 @@ export function Dashboard() {
   const hasData = !isLoading && !isError && !!stats;
 
   console.log("dashboard stats", stats)
+
+  // Generate all years from 1900 to current year + 5
+  const currentYear = new Date().getFullYear();
+  const startYear = 1900;
+  const endYear = currentYear + 5;
+  const totalYears = endYear - startYear + 1;
+  const years = Array.from({ length: totalYears }, (_, i) => endYear - i);
+
+  // Month options with labels
+  const months = [
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
+
+  // Get selected month label
+  const selectedMonthLabel = months.find(m => m.value === selectedMonth)?.label || '';
+
+  // Calculate start and end dates for selected year/month
+  const getMonthDateRange = (year: string, month: string) => {
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+    
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0);
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+  };
+
+  // Create filters for Sessions Over Time chart
+  const sessionsOverTimeFilters = useMemo(
+    () => getMonthDateRange(selectedYear, selectedMonth),
+    [selectedYear, selectedMonth]
+  );
 
   return (
     <div className="h-full">
@@ -96,19 +150,38 @@ export function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-base font-semibold">Session Over Time</CardTitle>
-            <Select defaultValue="october">
-              <SelectTrigger className="w-[130px] h-9">
-                <SelectValue placeholder="Select month" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="october">October</SelectItem>
-                <SelectItem value="september">September</SelectItem>
-                <SelectItem value="august">August</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              {/* Year Selector */}
+              <Select value={selectedYear} onValueChange={(value) => value && setSelectedYear(value)}>
+                <SelectTrigger className="w-[100px] h-9">
+                  <SelectValue>{selectedYear}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] overflow-y-auto">
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {/* Month Selector */}
+              <Select value={selectedMonth} onValueChange={(value) => value && setSelectedMonth(value)}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue>{selectedMonthLabel}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((month) => (
+                    <SelectItem key={month.value} value={month.value}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent className="pb-8">
-            <SessionOverTimeChart hasData={hasData} />
+            <SessionOverTimeChart hasData={true} filters={sessionsOverTimeFilters} />
           </CardContent>
         </Card>
 
@@ -118,7 +191,14 @@ export function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-base font-semibold">Device Usage</CardTitle>
-              <Select defaultValue="top5">
+              <Select 
+                value={deviceLimit.toString()} 
+                onValueChange={(value) => {
+                  if (value === 'top5') setDeviceLimit(5);
+                  else if (value === 'top10') setDeviceLimit(10);
+                  else setDeviceLimit(999); // Show all
+                }}
+              >
                 <SelectTrigger className="w-[140px] h-9">
                   <SelectValue />
                 </SelectTrigger>
@@ -130,7 +210,7 @@ export function Dashboard() {
               </Select>
             </CardHeader>
             <CardContent>
-              <DeviceUsageChart hasData={hasData} />
+              <DeviceUsageChart hasData={hasData} limit={deviceLimit} />
             </CardContent>
           </Card>
 

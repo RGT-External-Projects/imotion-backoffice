@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Calendar } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/StatCard';
 import {
@@ -98,18 +98,18 @@ export function Analytics() {
     }
   };
 
-  // Get display labels
-  const selectedTherapistLabel = selectedTherapist === 'all' 
-    ? 'All Therapists' 
-    : therapists.find((t: any) => t.id === selectedTherapist)?.displayName || 
-      therapists.find((t: any) => t.id === selectedTherapist)?.phoneNumber || 
-      'Select therapist';
+  // Get display labels - memoized to prevent unnecessary recalculations
+  const selectedTherapistLabel = useMemo(() => {
+    if (selectedTherapist === 'all') return 'All Therapists';
+    const therapist = therapists.find((t: any) => t.id === selectedTherapist);
+    return therapist?.displayName || therapist?.phoneNumber || 'Select therapist';
+  }, [selectedTherapist, therapists]);
 
-  const selectedDeviceLabel = selectedDevice === 'all'
-    ? 'All Devices'
-    : devices.find((d: any) => d.id === selectedDevice)?.deviceName ||
-      devices.find((d: any) => d.id === selectedDevice)?.deviceId ||
-      'Select device';
+  const selectedDeviceLabel = useMemo(() => {
+    if (selectedDevice === 'all') return 'All Devices';
+    const device = devices.find((d: any) => d.id === selectedDevice);
+    return device?.deviceName || device?.deviceId || 'Select device';
+  }, [selectedDevice, devices]);
 
   // Generate all years from 1900 to current year + 5 (descending order for easy access to recent years)
   const currentYear = new Date().getFullYear();
@@ -153,10 +153,30 @@ export function Analytics() {
     };
   };
 
-  // Create filters for Sessions Over Time chart
-  const sessionsOverTimeFilters = {
-    ...filters,
-    ...getMonthDateRange(selectedYear, selectedMonth),
+  // Create filters for Sessions Over Time chart (independent of top filters)
+  // Memoized to prevent unnecessary re-renders
+  const sessionsOverTimeFilters = useMemo(
+    () => getMonthDateRange(selectedYear, selectedMonth),
+    [selectedYear, selectedMonth]
+  );
+
+  // Empty filters object for charts that don't need filtering
+  // Memoized so React doesn't see it as a "new" object on each render
+  const emptyFilters = useMemo(() => ({}), []);
+
+  // Check if any filters are active
+  const hasActiveFilters = useMemo(() => {
+    return selectedTherapist !== 'all' || 
+           selectedDevice !== 'all' || 
+           dateRange !== 'Custom date';
+  }, [selectedTherapist, selectedDevice, dateRange]);
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSelectedTherapist('all');
+    setSelectedDevice('all');
+    setDateRange('Custom date');
+    setFilters({});
   };
 
   return (
@@ -201,6 +221,17 @@ export function Analytics() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Clear Filters Button - Only show when filters are active */}
+          {hasActiveFilters && (
+            <button
+              onClick={handleClearFilters}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <X className="h-4 w-4" />
+              Clear Filters
+            </button>
+          )}
         </div>
       </div>
 
@@ -264,49 +295,49 @@ export function Analytics() {
           </div>
         </CardHeader>
         <CardContent className="pb-8">
-          <SessionOverTimeChart hasData={hasData} filters={sessionsOverTimeFilters} />
+          <SessionOverTimeChart hasData={true} filters={sessionsOverTimeFilters} />
         </CardContent>
       </Card>
 
       {/* Bottom Grid - 4 Cards */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Stimuli Combination */}
+        {/* Stimuli Combination - No filters, shows all data */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Stimuli Combination</CardTitle>
           </CardHeader>
           <CardContent>
-            <StimuliCombinationChart hasData={hasData} filters={filters} />
+            <StimuliCombinationChart hasData={true} filters={emptyFilters} />
           </CardContent>
         </Card>
 
-        {/* Device Usage Sessions */}
+        {/* Device Usage Sessions - No filters, shows all data */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Device Usage Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <DeviceUsageSessionsChart hasData={hasData} filters={filters} />
+            <DeviceUsageSessionsChart hasData={true} filters={emptyFilters} />
           </CardContent>
         </Card>
 
-        {/* Session Duration Distribution */}
+        {/* Session Duration Distribution - No filters, shows all data */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Session Duration Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <SessionDurationChart hasData={hasData} filters={filters} />
+            <SessionDurationChart hasData={true} filters={emptyFilters} />
           </CardContent>
         </Card>
 
-        {/* Phone Sessions */}
+        {/* Phone Sessions - No filters, shows all data */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Phone Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <PhoneSessionsChart hasData={hasData} filters={filters} />
+            <PhoneSessionsChart hasData={true} filters={emptyFilters} />
           </CardContent>
         </Card>
       </div>

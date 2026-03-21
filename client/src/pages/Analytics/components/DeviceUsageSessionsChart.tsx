@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { EmptyState } from '@/components/EmptyState';
 import BluetoothIcon from '@/assets/bluetooth.svg';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip } from 'recharts';
@@ -17,7 +17,7 @@ interface DeviceUsageSessionsChartProps {
   filters?: AnalyticsFilters;
 }
 
-export function DeviceUsageSessionsChart({ hasData, filters }: DeviceUsageSessionsChartProps) {
+export const DeviceUsageSessionsChart = memo(function DeviceUsageSessionsChart({ hasData, filters }: DeviceUsageSessionsChartProps) {
   // Move state HERE so changing it doesn't re-render parent
   const [limit, setLimit] = useState<number>(5);
   // Fetch real data from API
@@ -138,4 +138,4 @@ export function DeviceUsageSessionsChart({ hasData, filters }: DeviceUsageSessio
       </ResponsiveContainer>
     </div>
   );
-}
+});
