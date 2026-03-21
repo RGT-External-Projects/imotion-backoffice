@@ -30,6 +30,10 @@ export function Dashboard() {
   // Device Usage filter state
   const [deviceLimit, setDeviceLimit] = useState<number>(5);
   
+  // Stimuli Breakdown filter state
+  const [stimuliYear, setStimuliYear] = useState<string>(new Date().getFullYear().toString());
+  const [stimuliMonth, setStimuliMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  
   // Fetch dashboard stats from API
   const { data: stats, isLoading, isError } = useDashboardStats();
   
@@ -83,6 +87,15 @@ export function Dashboard() {
     () => getMonthDateRange(selectedYear, selectedMonth),
     [selectedYear, selectedMonth]
   );
+
+  // Create filters for Stimuli Breakdown chart
+  const stimuliFilters = useMemo(
+    () => getMonthDateRange(stimuliYear, stimuliMonth),
+    [stimuliYear, stimuliMonth]
+  );
+
+  // Get stimuli month label
+  const stimuliMonthLabel = months.find(m => m.value === stimuliMonth)?.label || '';
 
   return (
     <div className="h-full">
@@ -218,18 +231,38 @@ export function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-base font-semibold">Stimuli Usage Breakdown</CardTitle>
-              <Select defaultValue="october">
-                <SelectTrigger className="w-[130px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="october">October</SelectItem>
-                  <SelectItem value="september">September</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                {/* Year Selector */}
+                <Select value={stimuliYear} onValueChange={(value) => value && setStimuliYear(value)}>
+                  <SelectTrigger className="w-[100px] h-9">
+                    <SelectValue>{stimuliYear}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Month Selector */}
+                <Select value={stimuliMonth} onValueChange={(value) => value && setStimuliMonth(value)}>
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue>{stimuliMonthLabel}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem key={month.value} value={month.value}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
-              <StimuliBreakdownChart hasData={hasData} />
+              <StimuliBreakdownChart hasData={true} filters={stimuliFilters} />
             </CardContent>
           </Card>
         </div>

@@ -1,9 +1,10 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { useStimuliBreakdown } from '@/hooks/useAnalytics';
+import { useStimuliBreakdown, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface StimuliBreakdownChartProps {
   hasData: boolean;
+  filters?: AnalyticsFilters;
 }
 
 const emptyData = [
@@ -28,9 +29,9 @@ const renderLegend = (_props: any, chartData: any[], showValues: boolean) => {
   );
 };
 
-export function StimuliBreakdownChart({ hasData }: StimuliBreakdownChartProps) {
-  // Fetch stimuli breakdown data - will add month filter later
-  const { data: stimuliData, isLoading } = useStimuliBreakdown();
+export function StimuliBreakdownChart({ hasData, filters }: StimuliBreakdownChartProps) {
+  // Fetch stimuli breakdown data with filters
+  const { data: stimuliData, isLoading } = useStimuliBreakdown(filters);
   
   // Transform API data to chart format
   const stimuliChartData = stimuliData ? [
@@ -39,7 +40,12 @@ export function StimuliBreakdownChart({ hasData }: StimuliBreakdownChartProps) {
     { name: 'Vibration', value: stimuliData.vibration, color: '#22c55e' },
   ] : [];
   
-  const chartData = (hasData && !isLoading && stimuliChartData.length > 0) ? stimuliChartData : emptyData;
+  // Check if all values are zero
+  const allZero = stimuliChartData.every(item => item.value === 0);
+  
+  // Show empty data if loading, no data, or all values are zero
+  const chartData = (hasData && !isLoading && stimuliChartData.length > 0 && !allZero) ? stimuliChartData : emptyData;
+  const showValues = hasData && !isLoading && !allZero;
 
   if (isLoading) {
     return (
@@ -74,7 +80,7 @@ export function StimuliBreakdownChart({ hasData }: StimuliBreakdownChartProps) {
           verticalAlign="middle" 
           align="right"
           layout="vertical"
-          content={(props) => renderLegend(props, chartData, hasData && !isLoading)}
+          content={(props) => renderLegend(props, allZero ? stimuliChartData : chartData, showValues)}
         />
       </PieChart>
     </ResponsiveContainer>
