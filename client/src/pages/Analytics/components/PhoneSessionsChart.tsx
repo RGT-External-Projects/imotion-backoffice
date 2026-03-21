@@ -1,19 +1,35 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Smartphone } from 'lucide-react';
+import { useTherapistActivity, type AnalyticsFilters } from '@/hooks/useAnalytics';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PhoneSessionsChartProps {
   hasData: boolean;
+  filters?: AnalyticsFilters;
 }
 
-const phoneSessionData = [
-  { phone: 'P - 021', sessions: 19 },
-  { phone: 'P - 345', sessions: 8 },
-  { phone: 'P - 233', sessions: 6 },
-  { phone: 'P - 003', sessions: 2 },
-  { phone: 'P - 419', sessions: 2 },
-];
+export function PhoneSessionsChart({ hasData, filters }: PhoneSessionsChartProps) {
+  const { data: therapistData, isLoading } = useTherapistActivity(filters);
+  
+  const phoneSessionData = therapistData?.therapists?.slice(0, 5).map((therapist: any) => {
+    const fullName = therapist.displayName || therapist.phoneNumber || 'Unknown';
+    // Truncate long names to 18 characters
+    const displayName = fullName.length > 18 ? fullName.substring(0, 18) + '...' : fullName;
+    return {
+      phone: displayName,
+      fullName: fullName,  // Keep full name for tooltip
+      sessions: therapist.sessionCount,
+    };
+  }) || [];
 
-export function PhoneSessionsChart({ hasData }: PhoneSessionsChartProps) {
+  if (isLoading) {
+    return (
+      <div className="h-[280px] space-y-3">
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+
   if (!hasData) {
     return (
       <div className="h-[280px] flex flex-col items-center justify-center">
@@ -25,7 +41,9 @@ export function PhoneSessionsChart({ hasData }: PhoneSessionsChartProps) {
     );
   }
 
-  const maxSessions = Math.max(...phoneSessionData.map(d => d.sessions));
+  const maxSessions = Math.max(...phoneSessionData.map((d: any) => d.sessions), 1);
+  // Better domain calculation: add 20% padding or minimum of 10
+  const xAxisMax = Math.max(maxSessions + Math.ceil(maxSessions * 0.2), 10);
 
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -35,9 +53,24 @@ export function PhoneSessionsChart({ hasData }: PhoneSessionsChartProps) {
         margin={{ top: 5, right: 60, left: 0, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+        <Tooltip
+          content={({ active, payload }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
+                  <p className="font-semibold text-sm text-gray-900">{payload[0].payload.fullName}</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Sessions: <span className="font-semibold">{payload[0].value}</span>
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          }}
+        />
         <XAxis 
           type="number" 
-          domain={[0, maxSessions + 30]}
+          domain={[0, xAxisMax]}
           tick={{ fontSize: 11, fill: '#9ca3af' }}
           axisLine={false}
           tickLine={false}
@@ -51,10 +84,11 @@ export function PhoneSessionsChart({ hasData }: PhoneSessionsChartProps) {
         <YAxis 
           type="category" 
           dataKey="phone"
-          tick={{ fontSize: 14, fill: '#1f2937' }}
+          tick={{ fontSize: 12, fill: '#1f2937' }}
           axisLine={false}
           tickLine={false}
-          width={60}
+          width={140}
+          interval={0}
         />
         <Bar 
           dataKey="sessions" 
@@ -68,7 +102,7 @@ export function PhoneSessionsChart({ hasData }: PhoneSessionsChartProps) {
             fontWeight: 500
           }}
         >
-          {phoneSessionData.map((_entry, index) => (
+          {phoneSessionData.map((_entry: any, index: number) => (
             <Cell key={`cell-${index}`} fill="#3b82f6" />
           ))}
         </Bar>

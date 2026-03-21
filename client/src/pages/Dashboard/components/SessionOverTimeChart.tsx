@@ -1,14 +1,15 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useSessionsOverTime } from '@/hooks/useAnalytics';
+import { useSessionsOverTime, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface SessionOverTimeChartProps {
   hasData: boolean;
+  filters?: AnalyticsFilters;
 }
 
-export function SessionOverTimeChart({ hasData }: SessionOverTimeChartProps) {
-  // Fetch sessions over time data - will add month filter later
-  const { data: sessionsData, isLoading } = useSessionsOverTime();
+export function SessionOverTimeChart({ hasData, filters }: SessionOverTimeChartProps) {
+  // Fetch sessions over time data with filters
+  const { data: sessionsData, isLoading } = useSessionsOverTime(filters);
   
   // Transform API data to chart format
   const chartData = sessionsData?.data.map(item => ({
