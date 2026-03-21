@@ -33,6 +33,10 @@ export function Analytics() {
   // Sessions Over Time filter state
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
+  
+  // Selected labels for display
+  const [selectedTherapist, setSelectedTherapist] = useState<string>('all');
+  const [selectedDevice, setSelectedDevice] = useState<string>('all');
 
   // Fetch dropdown data
   const { data: therapistsData } = useTherapists();
@@ -63,6 +67,7 @@ export function Analytics() {
   // Handle therapist filter
   const handleTherapistChange = (value: string | null) => {
     if (!value) return;
+    setSelectedTherapist(value);
     if (value === 'all') {
       setFilters(prev => {
         const { therapistPhoneId, ...rest } = prev;
@@ -79,6 +84,7 @@ export function Analytics() {
   // Handle device filter
   const handleDeviceChange = (value: string | null) => {
     if (!value) return;
+    setSelectedDevice(value);
     if (value === 'all') {
       setFilters(prev => {
         const { deviceId, ...rest } = prev;
@@ -91,6 +97,19 @@ export function Analytics() {
       }));
     }
   };
+
+  // Get display labels
+  const selectedTherapistLabel = selectedTherapist === 'all' 
+    ? 'All Therapists' 
+    : therapists.find((t: any) => t.id === selectedTherapist)?.displayName || 
+      therapists.find((t: any) => t.id === selectedTherapist)?.phoneNumber || 
+      'Select therapist';
+
+  const selectedDeviceLabel = selectedDevice === 'all'
+    ? 'All Devices'
+    : devices.find((d: any) => d.id === selectedDevice)?.deviceName ||
+      devices.find((d: any) => d.id === selectedDevice)?.deviceId ||
+      'Select device';
 
   // Generate all years from 1900 to current year + 5 (descending order for easy access to recent years)
   const currentYear = new Date().getFullYear();
@@ -154,9 +173,9 @@ export function Analytics() {
           </button>
           
           {/* Therapist Filter */}
-          <Select defaultValue="all" onValueChange={handleTherapistChange}>
+          <Select value={selectedTherapist} onValueChange={handleTherapistChange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Therapist" />
+              <SelectValue>{selectedTherapistLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Therapists</SelectItem>
@@ -169,9 +188,9 @@ export function Analytics() {
           </Select>
           
           {/* Device Filter */}
-          <Select defaultValue="all" onValueChange={handleDeviceChange}>
+          <Select value={selectedDevice} onValueChange={handleDeviceChange}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Device" />
+              <SelectValue>{selectedDeviceLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Devices</SelectItem>
