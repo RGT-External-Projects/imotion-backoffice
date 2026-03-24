@@ -26,9 +26,13 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // Enable CORS
+  // Enable CORS - support multiple origins
+  const allowedOrigins = process.env.CLIENT_URL 
+    ? process.env.CLIENT_URL.split(',').map(url => url.trim())
+    : ['http://localhost:5173'];
+  
   app.enableCors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
   });
 
