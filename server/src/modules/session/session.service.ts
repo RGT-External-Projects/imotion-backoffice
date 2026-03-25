@@ -298,7 +298,16 @@ export class SessionService {
 
     // Apply each change
     for (const log of settingsChanges) {
-      if (log.metadata?.settingPath && log.metadata?.newValue !== undefined) {
+      // Check if it's multiple changes format
+      if (log.metadata?.changes && Array.isArray(log.metadata.changes)) {
+        // Apply all changes from the array
+        for (const change of log.metadata.changes) {
+          if (change.settingPath && change.newValue !== undefined) {
+            this.setNestedValue(finalSettings, change.settingPath, change.newValue);
+          }
+        }
+      } else if (log.metadata?.settingPath && log.metadata?.newValue !== undefined) {
+        // Legacy single change format
         this.setNestedValue(finalSettings, log.metadata.settingPath, log.metadata.newValue);
       }
     }
@@ -336,6 +345,7 @@ export class SessionService {
 
   /**
    * Smart activity log creation - auto-fills missing fields for SETTINGS_CHANGED events
+   * Supports both single change and multiple changes format
    */
   async createActivityLogSmart(sessionId: string, dto: any): Promise<any> {
     let description = dto.description;
@@ -343,18 +353,75 @@ export class SessionService {
 
     // Auto-generate for SETTINGS_CHANGED if missing fields
     if (dto.eventType === SessionActivityEventType.SETTINGS_CHANGED) {
-      const settingPath = metadata.settingPath;
-      const newValue = metadata.newValue;
+      const session = await this.findOne(sessionId);
+      const settingsChanges = await this.activityLogService.findSettingsChanges(sessionId);
 
-      if (settingPath && newValue !== undefined) {
+      // Check if multiple changes format (with changes array)
+      if (metadata.changes && Array.isArray(metadata.changes)) {
+        // Process multiple changes
+        const processedChanges: Array<{ settingPath: string; oldValue: any; newValue: any }> = [];
+
+        for (const change of metadata.changes) {
+          const { settingPath, newValue } = change;
+          let { oldValue } = change;
+
+          if (settingPath && newValue !== undefined) {
+            // Auto-fill oldValue if missing
+            if (oldValue === undefined) {
+              // Try to get from most recent activity log first
+              const lastChange = settingsChanges.find(
+                log => log.metadata?.settingPath === settingPath || 
+                       log.metadata?.changes?.some((c: any) => c.settingPath === settingPath)
+              );
+
+              if (lastChange) {
+                // Check if it's from a changes array
+                if (lastChange.metadata?.changes) {
+                  const prevChange = lastChange.metadata.changes.find(
+                    (c: any) => c.settingPath === settingPath
+                  );
+                  oldValue = prevChange?.newValue;
+                } else if (lastChange.metadata?.settingPath === settingPath) {
+                  oldValue = lastChange.metadata.newValue;
+                }
+              }
+
+              // Fallback to initialSettings
+              if (oldValue === undefined) {
+                oldValue = this.getNestedValue(session.initialSettings, settingPath);
+              }
+            }
+
+            processedChanges.push({ settingPath, oldValue, newValue });
+          }
+        }
+
+        metadata.changes = processedChanges;
+
+        // Generate comprehensive description if missing
+        if (!description) {
+          if (processedChanges.length === 1) {
+            const change = processedChanges[0];
+            description = `Changed ${change.settingPath} from ${change.oldValue} to ${change.newValue}`;
+          } else {
+            const changeDescriptions = processedChanges.map(
+              c => `${c.settingPath}: ${c.oldValue} → ${c.newValue}`
+            );
+            description = `Multiple settings changed: ${changeDescriptions.join(', ')}`;
+          }
+        }
+      } else if (metadata.settingPath && metadata.newValue !== undefined) {
+        // Single change format (legacy support)
+        const settingPath = metadata.settingPath;
+        const newValue = metadata.newValue;
+
         // Get oldValue if missing
         if (metadata.oldValue === undefined) {
-          const session = await this.findOne(sessionId);
-          
           // Try to get from most recent activity log first
-          const settingsChanges = await this.activityLogService.findSettingsChanges(sessionId);
-          const lastChange = settingsChanges.find(log => log.metadata?.settingPath === settingPath);
-          
+          const lastChange = settingsChanges.find(
+            log => log.metadata?.settingPath === settingPath
+          );
+
           if (lastChange && lastChange.metadata?.newValue !== undefined) {
             metadata.oldValue = lastChange.metadata.newValue;
           } else {
