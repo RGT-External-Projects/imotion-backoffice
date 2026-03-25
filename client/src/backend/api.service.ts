@@ -1,6 +1,12 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// Ensure baseURL always ends with /api
+const getBaseURL = () => {
+  const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  return url.endsWith('/api') ? url : `${url}/api`;
+};
+
+const API_BASE_URL = getBaseURL();
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
