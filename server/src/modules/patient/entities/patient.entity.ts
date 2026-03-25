@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { Session } from '../../session/entities/session.entity';
+import { Session, SessionSettings } from '../../session/entities/session.entity';
 
 @Entity('patients')
 export class Patient {
@@ -27,6 +27,9 @@ export class Patient {
 
   @Column({ default: 'active' })
   status: string;
+
+  @Column({ type: 'jsonb', nullable: true, name: 'preferred_settings' })
+  preferredSettings: SessionSettings | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
