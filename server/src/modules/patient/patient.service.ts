@@ -28,24 +28,40 @@ export class PatientService {
   }
 
   private async generatePatientCode(): Promise<string> {
-    // Get the count of existing patients to generate sequential code
-    const count = await this.patientRepository.count();
-    const nextNumber = count + 1;
+    const maxRetries = 10;
+    let attempt = 0;
     
-    // Format as PAT-0001, PAT-0002, etc.
-    const code = `PAT-${nextNumber.toString().padStart(4, '0')}`;
-    
-    // Check if code already exists (edge case for concurrent requests)
-    const existing = await this.patientRepository.findOne({
-      where: { patientCode: code },
-    });
-    
-    if (existing) {
-      // If exists, recursively try next number
-      return this.generatePatientCode();
+    while (attempt < maxRetries) {
+      try {
+        // Get the count of existing patients to generate sequential code
+        const count = await this.patientRepository.count();
+        const nextNumber = count + 1 + attempt; // Add attempt to handle concurrent requests
+        
+        // Format as PAT-0001, PAT-0002, etc.
+        const code = `PAT-${nextNumber.toString().padStart(4, '0')}`;
+        
+        // Check if code already exists (edge case for concurrent requests)
+        const existing = await this.patientRepository.findOne({
+          where: { patientCode: code },
+        });
+        
+        if (!existing) {
+          return code;
+        }
+        
+        attempt++;
+      } catch (error) {
+        console.error('Error generating patient code:', error);
+        attempt++;
+        
+        // Wait briefly before retry to avoid hammering the database
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
     
-    return code;
+    // Fallback: use timestamp-based code if all retries fail
+    const timestamp = Date.now();
+    return `PAT-${timestamp.toString().slice(-8)}`;
   }
 
   async findAll(): Promise<Patient[]> {
