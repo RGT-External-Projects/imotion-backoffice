@@ -122,7 +122,7 @@ export class AnalyticsHelperService {
     }
 
     if (initialSettings.vibration || initialSettings.tactile) {
-      stimuli.push('Vibration'); // Fallback for old data with "tactile"
+      stimuli.push('Vibration'); // Fallback for old data with "tactile..."
     }
 
     return stimuli;
