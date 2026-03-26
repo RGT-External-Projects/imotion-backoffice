@@ -101,6 +101,15 @@ export class SessionController {
     return this.sessionService.resume(id);
   }
 
+  @Post(':id/restart')
+  @ApiOperation({ summary: 'Restart a session timer' })
+  @ApiParam({ name: 'id', description: 'Session UUID' })
+  @ApiResponse({ status: 200, description: 'Session timer restarted successfully' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  restart(@Param('id', ParseUUIDPipe) id: string) {
+    return this.sessionService.restart(id);
+  }
+
   @Post(':id/activity-logs')
   @ApiOperation({ 
     summary: 'Create an activity log for a session',

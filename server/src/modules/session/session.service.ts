@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, FindOptionsWhere } from 'typeorm';
+import { Repository, Like, Between, FindOptionsWhere, DataSource } from 'typeorm';
 import { Session, SessionStatus, SessionSettings } from './entities/session.entity';
+import { Device } from '../device/entities/device.entity';
+import { TherapistPhone } from '../therapist-phone/entities/therapist-phone.entity';
 import { SessionActivityLogService } from '../session-activity-log/session-activity-log.service';
+import { DeviceActivityLogService } from '../device-activity-log/device-activity-log.service';
 import { SessionActivityEventType } from '../session-activity-log/entities/session-activity-log.entity';
+import { DeviceActivityEventType } from '../device-activity-log/entities/device-activity-log.entity';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { CompleteSessionDto } from './dto/complete-session.dto';
 import { InterruptSessionDto } from './dto/interrupt-session.dto';
@@ -15,37 +19,157 @@ export class SessionService {
   constructor(
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
+    @InjectRepository(Device)
+    private readonly deviceRepository: Repository<Device>,
+    @InjectRepository(TherapistPhone)
+    private readonly therapistPhoneRepository: Repository<TherapistPhone>,
+    private readonly dataSource: DataSource,
     private readonly activityLogService: SessionActivityLogService,
+    private readonly deviceActivityLogService: DeviceActivityLogService,
   ) {}
 
   async create(createSessionDto: CreateSessionDto): Promise<Session> {
-    // Create session
-    const session = new Session();
-    session.deviceId = createSessionDto.deviceId;
-    session.therapistPhoneId = createSessionDto.therapistPhoneId;
-    session.patientId = createSessionDto.patientId;
-    session.initialSettings = createSessionDto.initialSettings;
-    session.status = SessionStatus.IN_PROGRESS;
-    session.sessionTimestamp = createSessionDto.sessionTimestamp 
-      ? new Date(createSessionDto.sessionTimestamp)
-      : new Date();
+    // Use a transaction to ensure atomicity
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction('READ COMMITTED');
 
-    const savedSession = await this.sessionRepository.save(session);
+    try {
+      // STEP 1: Find or auto-register Device
+      let device = await queryRunner.manager.findOne(Device, {
+        where: { deviceId: createSessionDto.deviceId },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-    // Auto-create SESSION_STARTED activity log
-    await this.activityLogService.create(
-      savedSession.id,
-      SessionActivityEventType.SESSION_STARTED,
-      `Session ${savedSession.id} started`,
-      {
-        initialSettings: createSessionDto.initialSettings,
-        deviceId: createSessionDto.deviceId,
-        therapistPhoneId: createSessionDto.therapistPhoneId,
+      let isNewDevice = false;
+      if (!device) {
+        // Auto-register device
+        device = queryRunner.manager.create(Device, {
+          deviceId: createSessionDto.deviceId,
+          serialNumber: createSessionDto.serialNumber || createSessionDto.deviceId,
+          deviceName: createSessionDto.deviceId, // Use deviceId as name if not provided
+          firmwareVersion: createSessionDto.firmwareVersion,
+          isActive: true,
+          lastConnected: new Date(),
+        });
+        device = await queryRunner.manager.save(Device, device);
+        isNewDevice = true;
+      } else {
+        // Update last connected timestamp
+        device.lastConnected = new Date();
+        await queryRunner.manager.save(Device, device);
+      }
+
+      // STEP 2: Find or auto-register TherapistPhone
+      let therapistPhone = await queryRunner.manager.findOne(TherapistPhone, {
+        where: { phoneNumber: createSessionDto.phoneUniqueId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!therapistPhone) {
+        // Auto-register therapist phone
+        therapistPhone = queryRunner.manager.create(TherapistPhone, {
+          phoneNumber: createSessionDto.phoneUniqueId,
+          displayName: createSessionDto.phoneModel || 'Unknown Phone',
+        });
+        therapistPhone = await queryRunner.manager.save(TherapistPhone, therapistPhone);
+      }
+
+      // STEP 3: Link device and therapist phone in junction table (if not already linked)
+      const existingLink = await queryRunner.manager
+        .createQueryBuilder()
+        .select()
+        .from('device_therapist_phones', 'dtp')
+        .where('dtp.device_id = :deviceId', { deviceId: device.id })
+        .andWhere('dtp.therapist_phone_id = :phoneId', { phoneId: therapistPhone.id })
+        .getRawOne();
+
+      if (!existingLink) {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into('device_therapist_phones')
+          .values({
+            device_id: device.id,
+            therapist_phone_id: therapistPhone.id,
+          })
+          .execute();
+      }
+
+      // STEP 4: Create session with database UUIDs
+      const session = queryRunner.manager.create(Session, {
+        deviceId: device.id,  // Database UUID
+        therapistPhoneId: therapistPhone.id,  // Database UUID
         patientId: createSessionDto.patientId,
-      },
-    );
+        initialSettings: createSessionDto.initialSettings,
+        status: SessionStatus.IN_PROGRESS,
+        sessionTimestamp: createSessionDto.sessionTimestamp 
+          ? new Date(createSessionDto.sessionTimestamp)
+          : new Date(),
+      });
 
-    return savedSession;
+      const savedSession = await queryRunner.manager.save(Session, session);
+
+      // Commit transaction - all operations succeed together
+      await queryRunner.commitTransaction();
+
+      // STEP 5: Create activity logs AFTER successful commit (outside transaction)
+      try {
+        if (isNewDevice) {
+          await this.deviceActivityLogService.create(
+            device.id,
+            DeviceActivityEventType.DEVICE_REGISTERED,
+            `Device ${device.deviceId} auto-registered via session creation`,
+            {
+              deviceId: device.deviceId,
+              serialNumber: device.serialNumber,
+              firmwareVersion: device.firmwareVersion,
+              autoRegistered: true,
+            },
+          );
+        }
+
+        // Log device connection
+        await this.deviceActivityLogService.create(
+          device.id,
+          DeviceActivityEventType.DEVICE_CONNECTED,
+          `Device ${device.deviceId} connected for session`,
+          {
+            therapistPhoneId: therapistPhone.id,
+            phoneModel: createSessionDto.phoneModel,
+            batteryLevel: createSessionDto.batteryLevel,
+            signalStrength: createSessionDto.signalStrength,
+            connectionType: 'bluetooth',
+            isNewDevice,
+          },
+        );
+
+        // Log session start
+        await this.activityLogService.create(
+          savedSession.id,
+          SessionActivityEventType.SESSION_STARTED,
+          `Session ${savedSession.id} started`,
+          {
+            initialSettings: createSessionDto.initialSettings,
+            deviceIdentifier: createSessionDto.deviceId,
+            phoneIdentifier: createSessionDto.phoneUniqueId,
+            patientId: createSessionDto.patientId,
+          },
+        );
+      } catch (logError) {
+        // Log errors but don't fail the session creation
+        console.error('Failed to create activity logs:', logError);
+      }
+
+      return savedSession;
+    } catch (error) {
+      // Rollback transaction on any error
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Release query runner resources
+      await queryRunner.release();
+    }
   }
 
   async findAll(): Promise<Session[]> {
@@ -274,6 +398,22 @@ export class SessionService {
     );
 
     return updatedSession;
+  }
+
+  async restart(id: string): Promise<Session> {
+    const session = await this.findOne(id);
+
+    // Session stays IN_PROGRESS, no status change needed
+    // Just log the restart event - mobile app will reset timer on their end
+
+    // Create SESSION_RESTARTED log
+    await this.activityLogService.create(
+      id,
+      SessionActivityEventType.SESSION_RESTARTED,
+      `Session ${id} timer was restarted`,
+    );
+
+    return session;
   }
 
   async remove(id: string): Promise<void> {

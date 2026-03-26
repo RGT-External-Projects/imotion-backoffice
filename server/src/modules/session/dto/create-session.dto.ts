@@ -1,24 +1,24 @@
-import { IsUUID, IsObject, IsDateString, IsOptional } from 'class-validator';
+import { IsUUID, IsObject, IsDateString, IsOptional, IsString, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import type { SessionSettings } from '../entities/session.entity';
 
 export class CreateSessionDto {
   @ApiProperty({
-    description: 'UUID of the device',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Device identifier (natural ID from device, not database UUID)',
+    example: 'IMOTION-DEV-001',
   })
-  @IsUUID()
+  @IsString()
   deviceId: string;
 
   @ApiProperty({
-    description: 'UUID of the therapist phone',
-    example: '123e4567-e89b-12d3-a456-426614174001',
+    description: 'Phone unique identifier (natural ID from phone, not database UUID)',
+    example: 'ABC-123-PHONE-456',
   })
-  @IsUUID()
-  therapistPhoneId: string;
+  @IsString()
+  phoneUniqueId: string;
 
   @ApiProperty({
-    description: 'UUID of the patient',
+    description: 'UUID of the patient (from patient selection)',
     example: '123e4567-e89b-12d3-a456-426614174002',
   })
   @IsUUID()
@@ -57,4 +57,49 @@ export class CreateSessionDto {
   @IsDateString()
   @IsOptional()
   sessionTimestamp?: string;
+
+  @ApiProperty({
+    description: 'Phone model for logging purposes (optional)',
+    example: 'iPhone 13 Pro',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  phoneModel?: string;
+
+  @ApiProperty({
+    description: 'Device serial number (optional)',
+    example: 'SN-20260312-001',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  serialNumber?: string;
+
+  @ApiProperty({
+    description: 'Device firmware version (optional)',
+    example: '2.1.0',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  firmwareVersion?: string;
+
+  @ApiProperty({
+    description: 'Phone battery level percentage (optional)',
+    example: 85,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  batteryLevel?: number;
+
+  @ApiProperty({
+    description: 'Bluetooth signal strength in dBm (optional)',
+    example: -45,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  signalStrength?: number;
 }
