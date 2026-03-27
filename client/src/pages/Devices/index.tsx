@@ -2,16 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Download, Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { EmptyState } from '@/components/EmptyState';
 import { useDevices } from '@/hooks/useDevices';
 import { type DeviceQueryParams } from '@/backend/device.service';
@@ -44,14 +36,6 @@ export function Devices() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const handleStatusChange = (value: string | null) => {
-    const statusValue = value || 'all';
-    setFilters(prev => ({
-      ...prev,
-      isActive: statusValue === 'all' ? undefined : statusValue === 'active',
-      page: 1,
-    }));
-  };
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
@@ -60,7 +44,7 @@ export function Devices() {
   const handleExport = () => {
     if (!devices || devices.length === 0) return;
 
-    const headers = ['Device ID', 'Device Name', 'Serial Number', 'Last Phone', 'Total Sessions', 'Last Activity', 'Status', 'Firmware'];
+    const headers = ['Device ID', 'Device Name', 'Serial Number', 'Last Phone', 'Total Sessions', 'Last Activity', 'Firmware'];
     
     const exportData = devices.map(device => ({
       deviceId: device.deviceId,
@@ -69,14 +53,13 @@ export function Devices() {
       lastPhone: device.lastConnectedPhone?.phoneNumber || 'N/A',
       totalSessions: device.sessionCount || 0,
       lastActivity: device.lastConnected ? new Date(device.lastConnected).toLocaleDateString() : 'Never',
-      status: device.isActive ? 'Active' : 'Offline',
       firmware: device.firmwareVersion || 'N/A',
     }));
 
     exportToCSV(exportData, headers, `devices_export_${getDateString()}`);
   };
 
-  const hasActiveFilters = !!(filters.search || filters.isActive !== undefined);
+  const hasActiveFilters = !!filters.search;
 
   // Show empty state only if no filters and no data
   if (!isLoading && devices.length === 0 && !hasActiveFilters) {
@@ -93,23 +76,10 @@ export function Devices() {
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <Button className="ml-4 gap-2" onClick={handleExport}>
+          <Button className="ml-4 gap-2 bg-blue-600 hover:bg-blue-700" onClick={handleExport} disabled>
             <Download className="h-4 w-4" />
             Export
           </Button>
-        </div>
-
-        <div className="mb-6">
-          <Select value="all" onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="flex-1 flex items-center justify-center">
@@ -136,27 +106,10 @@ export function Devices() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <Button className="ml-4 gap-2" onClick={handleExport} disabled={devices.length === 0}>
+        <Button className="ml-4 gap-2 bg-blue-600 hover:bg-blue-700" onClick={handleExport} disabled={devices.length === 0}>
           <Download className="h-4 w-4" />
           Export
         </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6">
-        <Select 
-          value={filters.isActive === undefined ? 'all' : filters.isActive ? 'active' : 'offline'} 
-          onValueChange={handleStatusChange}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Devices Table */}
@@ -169,7 +122,6 @@ export function Devices() {
                 <th className="p-4 font-medium">Last connected phone</th>
                 <th className="p-4 font-medium">Total Sessions</th>
                 <th className="p-4 font-medium">Last activity</th>
-                <th className="p-4 font-medium">Status</th>
                 <th className="p-4 font-medium">Firmware</th>
                 <th className="p-4 font-medium"></th>
               </tr>
@@ -182,14 +134,13 @@ export function Devices() {
                     <td className="p-4"><Skeleton className="h-5 w-28" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-16" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-24" /></td>
-                    <td className="p-4"><Skeleton className="h-6 w-20" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-16" /></td>
                     <td className="p-4"><Skeleton className="h-5 w-12" /></td>
                   </tr>
                 ))
               ) : devices.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center">
+                  <td colSpan={6} className="p-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <p className="text-muted-foreground text-lg mb-2">No devices found</p>
                       <p className="text-muted-foreground text-sm">Try adjusting your filters</p>
@@ -206,18 +157,6 @@ export function Devices() {
                       {device.lastConnected 
                         ? new Date(device.lastConnected).toLocaleDateString() 
                         : 'Never'}
-                    </td>
-                    <td className="p-4">
-                      <Badge 
-                        className={
-                          device.isActive
-                            ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
-                        }
-                      >
-                        <span className="mr-1.5">●</span>
-                        {device.isActive ? 'Active' : 'Offline'}
-                      </Badge>
                     </td>
                     <td className="p-4">{device.firmwareVersion || 'N/A'}</td>
                     <td className="p-4">

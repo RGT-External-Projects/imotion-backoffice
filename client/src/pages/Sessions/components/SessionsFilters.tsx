@@ -16,9 +16,10 @@ interface SessionsFiltersProps {
   onFilterChange: (filters: Partial<SessionQueryParams>) => void;
   currentFilters: SessionQueryParams;
   onExport: () => void;
+  hasData: boolean;
 }
 
-export function SessionsFilters({ onFilterChange, currentFilters, onExport }: SessionsFiltersProps) {
+export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasData }: SessionsFiltersProps) {
   const [dateRange, setDateRange] = useState('Custom date');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -94,6 +95,7 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport }: Se
         <Button 
           className="gap-2 bg-blue-600 hover:bg-blue-700 flex-shrink-0 cursor-pointer"
           onClick={onExport}
+          disabled={!hasData}
         >
           <span>Export</span>
           <Download className="h-4 w-4" />

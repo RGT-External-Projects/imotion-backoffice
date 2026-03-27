@@ -60,8 +60,11 @@ export function DeviceUsageChart({ hasData, limit = 5 }: DeviceUsageChartProps) 
     return <EmptyState icon={BluetoothIcon} message="No devices added yet" />;
   }
 
+  // Dynamic height based on device count: base 150px + 30px per device
+  const chartHeight = Math.max(250, 150 + (chartData.length * 30));
+
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height={chartHeight}>
       <BarChart 
         data={chartData} 
         layout="vertical"
