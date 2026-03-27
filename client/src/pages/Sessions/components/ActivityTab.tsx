@@ -56,7 +56,7 @@ export function ActivityTab({ activityLogs }: ActivityTabProps) {
                   {getEventTitle(log.eventType)}
                 </h4>
                 <div className="bg-gray-100 rounded-lg p-4">
-                  <p className="text-sm text-gray-900 leading-relaxed">
+                  <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-line font-mono">
                     {log.description}
                   </p>
                 </div>

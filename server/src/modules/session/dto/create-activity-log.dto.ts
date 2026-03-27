@@ -26,8 +26,8 @@ export class CreateActivityLogDto {
   eventType: SessionActivityEventType;
 
   @ApiPropertyOptional({
-    description: 'Human-readable description of the event (optional - auto-generated for SETTINGS_CHANGED if not provided)',
-    example: 'Increased vibration intensity from 50 to 70',
+    description: '⚠️ MOBILE APP: DO NOT send this field for SETTINGS_CHANGED events! Backend auto-generates beautiful descriptions. Only send for custom events.',
+    example: 'Custom event description for non-settings events',
   })
   @IsString()
   @IsOptional()
@@ -63,7 +63,6 @@ Available Setting Paths (provided by mobile team):
       changes: [
         { settingPath: 'vibration.intensity', newValue: 70 },
         { settingPath: 'audio.volume', newValue: 45 },
-        { settingPath: 'visual.feedback', newValue: true },
       ],
     },
     examples: {

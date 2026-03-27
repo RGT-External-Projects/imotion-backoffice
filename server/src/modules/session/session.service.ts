@@ -311,6 +311,10 @@ export class SessionService {
       throw new NotFoundException(`Session with ID ${id} not found`);
     }
 
+    // ALWAYS compute finalSettings from activity logs (real-time)
+    // This ensures stimulus cards show current values even during active sessions
+    session.finalSettings = await this.computeFinalSettings(id, session.initialSettings);
+
     return session;
   }
 
@@ -493,21 +497,24 @@ export class SessionService {
 
   /**
    * Convert setting path to human-readable display name
-   * Example: "vibration.intensity" → "Vibration Intensity"
+   * Example: "vibration.intensity" → "Intensity"
    */
   private formatSettingName(settingPath: string): string {
     const parts = settingPath.split('.');
-    return parts
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
+    // Only return the property name (not the stimulus type)
+    const propertyName = parts[parts.length - 1];
+    return propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
   }
 
   /**
    * Format value for display
    */
   private formatValue(value: any): string {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
     if (typeof value === 'boolean') {
-      return value ? 'enabled' : 'disabled';
+      return value ? 'On' : 'Off';
     }
     if (typeof value === 'number') {
       return value.toString();
@@ -517,8 +524,13 @@ export class SessionService {
       if (value.startsWith('#')) {
         return value;
       }
-      // Capitalize first letter of strings
-      return value.charAt(0).toUpperCase() + value.slice(1);
+      // Capitalize first letter of strings and replace dashes/underscores
+      return value
+        .replace(/-/g, ' ')
+        .replace(/_/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
     }
     return String(value);
   }
@@ -599,9 +611,11 @@ export class SessionService {
                 const name = this.formatSettingName(c.settingPath);
                 const oldVal = this.formatValue(c.oldValue);
                 const newVal = this.formatValue(c.newValue);
-                return `• ${name}: ${oldVal} → ${newVal}`;
-              }).join('\n');
-              descriptionParts.push(`Vibration:\n${changes}`);
+                // Only show change if values are actually different
+                if (oldVal === newVal) return null;
+                return `  ${name}: ${oldVal} → ${newVal}`;
+              }).filter(Boolean).join('\n');
+              if (changes) descriptionParts.push(`Vibration:\n${changes}`);
             }
             
             if (audioChanges.length > 0) {
@@ -609,9 +623,11 @@ export class SessionService {
                 const name = this.formatSettingName(c.settingPath);
                 const oldVal = this.formatValue(c.oldValue);
                 const newVal = this.formatValue(c.newValue);
-                return `• ${name}: ${oldVal} → ${newVal}`;
-              }).join('\n');
-              descriptionParts.push(`Audio:\n${changes}`);
+                // Only show change if values are actually different
+                if (oldVal === newVal) return null;
+                return `  ${name}: ${oldVal} → ${newVal}`;
+              }).filter(Boolean).join('\n');
+              if (changes) descriptionParts.push(`Audio:\n${changes}`);
             }
             
             if (visualChanges.length > 0) {
@@ -619,12 +635,17 @@ export class SessionService {
                 const name = this.formatSettingName(c.settingPath);
                 const oldVal = this.formatValue(c.oldValue);
                 const newVal = this.formatValue(c.newValue);
-                return `• ${name}: ${oldVal} → ${newVal}`;
-              }).join('\n');
-              descriptionParts.push(`Visual:\n${changes}`);
+                // Only show change if values are actually different
+                if (oldVal === newVal) return null;
+                return `  ${name}: ${oldVal} → ${newVal}`;
+              }).filter(Boolean).join('\n');
+              if (changes) descriptionParts.push(`Visual:\n${changes}`);
             }
             
-            description = `Stimuli Configuration Adjusted\n\n${descriptionParts.join('\n\n')}`;
+            // Don't add title here - it's already in the UI as event title
+            description = descriptionParts.length > 0 
+              ? descriptionParts.join('\n\n')
+              : 'Stimuli configuration updated';
           }
         }
       } else if (metadata.settingPath && metadata.newValue !== undefined) {
