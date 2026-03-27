@@ -6,7 +6,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { type SessionQueryParams } from '@/backend/session.service';
