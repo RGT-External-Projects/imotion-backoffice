@@ -106,6 +106,7 @@ export function Sessions() {
         onFilterChange={handleFilterChange} 
         currentFilters={filters}
         onExport={handleExport}
+        hasData={transformedSessions.length > 0}
       />
       
       <Card>

@@ -28,7 +28,8 @@ export function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
   
   // Device Usage filter state
-  const [deviceLimit, setDeviceLimit] = useState<number>(5);
+  const [deviceLimitOption, setDeviceLimitOption] = useState<string>('5');
+  const deviceLimit = deviceLimitOption === 'all' ? 999 : parseInt(deviceLimitOption);
   
   // Stimuli Breakdown filter state
   const [stimuliYear, setStimuliYear] = useState<string>(new Date().getFullYear().toString());
@@ -205,19 +206,15 @@ export function Dashboard() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-base font-semibold">Device Usage</CardTitle>
               <Select 
-                value={deviceLimit.toString()} 
-                onValueChange={(value) => {
-                  if (value === 'top5') setDeviceLimit(5);
-                  else if (value === 'top10') setDeviceLimit(10);
-                  else setDeviceLimit(999); // Show all
-                }}
+                value={deviceLimitOption} 
+                onValueChange={(value) => value && setDeviceLimitOption(value)}
               >
                 <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue />
+                  <SelectValue placeholder="Select limit" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="top5">Top 5 Devices</SelectItem>
-                  <SelectItem value="top10">Top 10 Devices</SelectItem>
+                  <SelectItem value="5">Top 5 Devices</SelectItem>
+                  <SelectItem value="10">Top 10 Devices</SelectItem>
                   <SelectItem value="all">All Devices</SelectItem>
                 </SelectContent>
               </Select>

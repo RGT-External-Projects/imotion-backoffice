@@ -61,28 +61,37 @@ export function StimuliBreakdownChart({ hasData, filters }: StimuliBreakdownChar
   }
 
   return (
-    <ResponsiveContainer width="100%" height={250}>
-      <PieChart>
-        <Pie
-          data={chartData}
-          cx="40%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={hasData ? 2 : 0}
-          dataKey="value"
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Legend 
-          verticalAlign="middle" 
-          align="right"
-          layout="vertical"
-          content={(props) => renderLegend(props, allZero ? stimuliChartData : chartData, showValues)}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div>
+      <ResponsiveContainer width="100%" height={250}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            cx="40%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={90}
+            paddingAngle={hasData ? 2 : 0}
+            dataKey="value"
+            label={showValues ? (entry: any) => `${entry.value}%` : undefined}
+            labelLine={showValues}
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Legend 
+            verticalAlign="middle" 
+            align="right"
+            layout="vertical"
+            content={(props) => renderLegend(props, allZero ? stimuliChartData : chartData, showValues)}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      {showValues && (
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          *Sessions can have multiple stimuli types active simultaneously
+        </p>
+      )}
+    </div>
   );
 }
