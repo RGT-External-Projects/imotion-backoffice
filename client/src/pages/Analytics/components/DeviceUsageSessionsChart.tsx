@@ -51,12 +51,15 @@ export const DeviceUsageSessionsChart = memo(function DeviceUsageSessionsChart({
   // Better domain calculation: add 20% padding or minimum of 10
   const xAxisMax = Math.max(maxSessions + Math.ceil(maxSessions * 0.2), 10);
 
+  // Dynamic height based on number of devices: base 150px + 35px per device
+  const chartHeight = Math.max(280, 150 + (deviceSessionData.length * 35));
+
   return (
     <div className="space-y-4">
       {/* Filter dropdown inside chart component */}
       <div className="flex justify-end mb-2">
         <Select 
-          defaultValue="top5" 
+          value={limit === 5 ? 'top5' : limit === 10 ? 'top10' : 'all'}
           onValueChange={(value) => {
             if (value === 'top5') setLimit(5);
             else if (value === 'top10') setLimit(10);
@@ -64,7 +67,9 @@ export const DeviceUsageSessionsChart = memo(function DeviceUsageSessionsChart({
           }}
         >
           <SelectTrigger className="w-[140px] h-9">
-            <SelectValue />
+            <SelectValue>
+              {limit === 5 ? 'Top 5 Devices' : limit === 10 ? 'Top 10 Devices' : 'All Devices'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="top5">Top 5 Devices</SelectItem>
@@ -74,7 +79,7 @@ export const DeviceUsageSessionsChart = memo(function DeviceUsageSessionsChart({
         </Select>
       </div>
       
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart 
           data={deviceSessionData} 
           layout="vertical"
