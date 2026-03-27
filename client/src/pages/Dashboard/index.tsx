@@ -105,7 +105,7 @@ export function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Welcome back</h1>
           <p className="text-sm text-muted-foreground">
-            You've completed 3 sessions today, keep it up!
+            {hasData ? `You've completed ${stats.sessionsToday} session${stats.sessionsToday !== 1 ? 's' : ''} today, keep it up!` : 'Loading...'}
           </p>
         </div>
 
@@ -231,38 +231,9 @@ export function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-base font-semibold">Stimuli Usage Breakdown</CardTitle>
-              <div className="flex items-center gap-2">
-                {/* Year Selector */}
-                <Select value={stimuliYear} onValueChange={(value) => value && setStimuliYear(value)}>
-                  <SelectTrigger className="w-[100px] h-9">
-                    <SelectValue>{stimuliYear}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px] overflow-y-auto">
-                    {years.map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                {/* Month Selector */}
-                <Select value={stimuliMonth} onValueChange={(value) => value && setStimuliMonth(value)}>
-                  <SelectTrigger className="w-[120px] h-9">
-                    <SelectValue>{stimuliMonthLabel}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((month) => (
-                      <SelectItem key={month.value} value={month.value}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </CardHeader>
             <CardContent>
-              <StimuliBreakdownChart hasData={true} filters={stimuliFilters} />
+              <StimuliBreakdownChart hasData={true} />
             </CardContent>
           </Card>
         </div>

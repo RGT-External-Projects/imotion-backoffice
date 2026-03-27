@@ -35,8 +35,8 @@ export const SessionOverTimeChart = memo(function SessionOverTimeChart({ hasData
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+    <ResponsiveContainer width="100%" height={350}>
+      <AreaChart data={chartData} margin={{ top: 10, right: 80, left: 0, bottom: 50 }}>
         <defs>
           <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -48,6 +48,10 @@ export const SessionOverTimeChart = memo(function SessionOverTimeChart({ hasData
           dataKey="date" 
           tick={{ fontSize: 12, fill: '#6b7280' }}
           axisLine={{ stroke: '#e5e7eb' }}
+          angle={-45}
+          textAnchor="end"
+          height={70}
+          interval={1}
         />
         <YAxis 
           tick={{ fontSize: 12, fill: '#6b7280' }}

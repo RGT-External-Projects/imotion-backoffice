@@ -106,23 +106,25 @@ export class AnalyticsHelperService {
 
   /**
    * Extract stimuli types from initialSettings JSON
+   * Only count stimuli that are ENABLED, not just present
    */
   extractStimuliTypes(initialSettings: any): string[] {
     const stimuli: string[] = [];
 
     if (!initialSettings) return stimuli;
 
-    // Check if each stimuli type is present and has meaningful values
-    if (initialSettings.visual) {
+    // Check if each stimuli type is ENABLED (not just if property exists)
+    if (initialSettings.visual && initialSettings.visual.enabled === true) {
       stimuli.push('Visual');
     }
 
-    if (initialSettings.audio) {
+    if (initialSettings.audio && initialSettings.audio.enabled === true) {
       stimuli.push('Audio');
     }
 
-    if (initialSettings.vibration || initialSettings.tactile) {
-      stimuli.push('Vibration'); // Fallback for old data with "tactile..."
+    if ((initialSettings.vibration && initialSettings.vibration.enabled === true) ||
+        (initialSettings.tactile && initialSettings.tactile.enabled === true)) {
+      stimuli.push('Vibration'); // Fallback for old data with "tactile"
     }
 
     return stimuli;
