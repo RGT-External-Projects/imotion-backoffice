@@ -146,7 +146,7 @@ jobs:
             --parameters 'commands=[
               "cd /home/ubuntu",
               "aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 330858616968.dkr.ecr.eu-central-1.amazonaws.com",
-              "docker compose run --rm imotion-server npm run migration:run:prod",
+              "docker compose run --rm --pull always imotion-server npm run migration:run:prod",
               "docker compose pull imotion-server",
               "docker compose up -d imotion-server --force-recreate --no-deps",
               "echo 'Cleanup...'",
