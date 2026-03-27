@@ -46,22 +46,43 @@ export function Sessions() {
   const meta = sessionResponse?.meta;
 
   // Transform backend data to table format
-  const transformedSessions = sessions.map((session, index) => ({
-    id: session.id, // Keep full UUID for navigation
-    displayId: generateSessionId(session.id, index, filters.page || 1, filters.limit || 10),
-    phoneId: session.therapistPhone?.phoneNumber || 'Unknown',
-    device: session.device?.deviceName || 'Unknown',
-    stimuli: extractStimuli(session.finalSettings || session.initialSettings),
-    timestamp: new Date(session.sessionTimestamp).toLocaleString('en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).replace(',', ' •'),
-    status: session.status === 'COMPLETED' ? 'Completed' as const : 'Interrupted' as const,
-    duration: formatDuration(session.duration),
-  }));
+  const transformedSessions = sessions.map((session, index) => {
+    // Map backend status to display status
+    let displayStatus: 'In Progress' | 'Paused' | 'Completed' | 'Interrupted';
+    switch (session.status) {
+      case 'IN_PROGRESS':
+        displayStatus = 'In Progress';
+        break;
+      case 'PAUSED':
+        displayStatus = 'Paused';
+        break;
+      case 'COMPLETED':
+        displayStatus = 'Completed';
+        break;
+      case 'INTERRUPTED':
+        displayStatus = 'Interrupted';
+        break;
+      default:
+        displayStatus = 'Interrupted';
+    }
+
+    return {
+      id: session.id, // Keep full UUID for navigation
+      displayId: generateSessionId(session.id, index, filters.page || 1, filters.limit || 10),
+      phoneId: session.therapistPhone?.phoneNumber || 'Unknown',
+      device: session.device?.deviceName || 'Unknown',
+      stimuli: extractStimuli(session.finalSettings || session.initialSettings),
+      timestamp: new Date(session.sessionTimestamp).toLocaleString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).replace(',', ' •'),
+      status: displayStatus,
+      duration: formatDuration(session.duration),
+    };
+  });
 
  
   // Handler for page change

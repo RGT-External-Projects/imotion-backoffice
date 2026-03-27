@@ -1,18 +1,22 @@
 import api from './api.service';
 
 export interface SessionSettings {
-  visual: {
-    contrast: number;
-    colorMode: string;
-    brightness: number;
-  };
-  tactile: {
-    pattern: string;
+  vibration: {
+    feedback: boolean;
     intensity: number;
+    pulse: string;
   };
   audio: {
+    feedback: boolean;
     volume: number;
-    soundType: string;
+    sound: string;
+  };
+  visual: {
+    feedback: boolean;
+    color: string;
+    brightness: number;
+    movement: string;
+    speed: number;
   };
 }
 

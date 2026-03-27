@@ -6,7 +6,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { type SessionQueryParams } from '@/backend/session.service';
@@ -29,7 +28,7 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
   
   // Use current filter values for controlled components
   const device = currentFilters.deviceId || 'all';
-  const status = currentFilters.status?.toLowerCase() || 'all-status';
+  const status = currentFilters.status?.toLowerCase().replace('_', ' ') || 'all-status';
 
   // Get display text for selected device
   const getDeviceDisplayText = () => {
@@ -40,6 +39,16 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
       return `${selectedDevice.deviceName} (${selectedDevice.deviceId})`;
     }
     return selectedDevice.deviceId;
+  };
+
+  // Get display text for selected status
+  const getStatusDisplayText = () => {
+    if (status === 'all-status') return 'All Status';
+    if (status === 'in progress') return 'In Progress';
+    if (status === 'paused') return 'Paused';
+    if (status === 'completed') return 'Completed';
+    if (status === 'interrupted') return 'Interrupted';
+    return 'All Status';
   };
 
   // Debounce search input
@@ -84,7 +93,7 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
       onFilterChange({ status: undefined });
     } else {
       onFilterChange({ 
-        status: statusValue.toUpperCase() as 'COMPLETED' | 'INTERRUPTED'
+        status: statusValue.toUpperCase().replace(' ', '_') as 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'INTERRUPTED'
       });
     }
   };
@@ -147,11 +156,13 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-[140px] h-10">
-            <SelectValue />
+          <SelectTrigger className="w-[160px] h-10">
+            <span className="text-sm">{getStatusDisplayText()}</span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all-status">All Status</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="paused">Paused</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="interrupted">Interrupted</SelectItem>
           </SelectContent>

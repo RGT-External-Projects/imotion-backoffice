@@ -21,22 +21,22 @@ export enum SessionStatus {
 }
 
 export interface SessionSettings {
-  visual: {
-    enabled: boolean;
-    color: string;
-    speed: number;
-    movement: string;
-  };
   vibration: {
-    enabled: boolean;
+    feedback: boolean;
     intensity: number;
     pulse: string;
-    speed: number;
   };
   audio: {
-    enabled: boolean;
-    volume?: number;
-    type?: string;
+    feedback: boolean;
+    volume: number;
+    sound: string;
+  };
+  visual: {
+    feedback: boolean;
+    color: string;
+    brightness: number;
+    movement: string;
+    speed: number;
   };
 }
 

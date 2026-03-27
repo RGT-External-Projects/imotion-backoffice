@@ -11,7 +11,7 @@ interface Session {
   device: string;
   stimuli: string[];
   timestamp: string;
-  status: 'Completed' | 'Interrupted';
+  status: 'In Progress' | 'Paused' | 'Completed' | 'Interrupted';
   duration: string;
 }
 
@@ -111,11 +111,15 @@ export function SessionsTable({ sessions, currentPage, totalPages, totalItems, i
                 <td className="p-4 text-muted-foreground whitespace-nowrap">{session.timestamp}</td>
                 <td className="p-4">
                   <Badge
-                    variant={session.status === 'Completed' ? 'default' : 'destructive'}
+                    variant={session.status === 'Completed' ? 'default' : session.status === 'Interrupted' ? 'destructive' : 'secondary'}
                     className={
                       session.status === 'Completed'
                         ? 'bg-green-100 text-green-700 hover:bg-green-100'
-                        : 'bg-red-100 text-red-700 hover:bg-red-100'
+                        : session.status === 'Interrupted'
+                        ? 'bg-red-100 text-red-700 hover:bg-red-100'
+                        : session.status === 'In Progress'
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-100'
+                        : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
                     }
                   >
                     <span className="mr-1.5">●</span>
