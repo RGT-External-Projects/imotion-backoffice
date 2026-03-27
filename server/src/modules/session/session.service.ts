@@ -148,12 +148,13 @@ export class SessionService {
         await this.activityLogService.create(
           savedSession.id,
           SessionActivityEventType.SESSION_STARTED,
-          `Session ${savedSession.id} started`,
+          `Therapy session started`,
           {
             initialSettings: createSessionDto.initialSettings,
             deviceIdentifier: createSessionDto.deviceId,
             phoneIdentifier: createSessionDto.phoneUniqueId,
             patientId: createSessionDto.patientId,
+            sessionId: savedSession.id,
           },
         );
       } catch (logError) {
@@ -330,10 +331,11 @@ export class SessionService {
     await this.activityLogService.create(
       id,
       SessionActivityEventType.SESSION_COMPLETED,
-      `Session ${id} completed successfully`,
+      `Therapy session completed successfully`,
       {
         duration: completeDto.duration,
         finalSettings,
+        sessionId: id,
       },
     );
 
@@ -357,11 +359,12 @@ export class SessionService {
     await this.activityLogService.create(
       id,
       SessionActivityEventType.SESSION_INTERRUPTED,
-      `Session ${id} was interrupted`,
+      `Therapy session was interrupted`,
       {
         duration: interruptDto.duration,
         reason: interruptDto.reason,
         finalSettings,
+        sessionId: id,
       },
     );
 
@@ -378,7 +381,8 @@ export class SessionService {
     await this.activityLogService.create(
       id,
       SessionActivityEventType.SESSION_PAUSED,
-      `Session ${id} was paused`,
+      `Therapy session paused`,
+      { sessionId: id },
     );
 
     return updatedSession;
@@ -394,7 +398,8 @@ export class SessionService {
     await this.activityLogService.create(
       id,
       SessionActivityEventType.SESSION_RESUMED,
-      `Session ${id} was resumed`,
+      `Therapy session resumed`,
+      { sessionId: id },
     );
 
     return updatedSession;
@@ -410,7 +415,8 @@ export class SessionService {
     await this.activityLogService.create(
       id,
       SessionActivityEventType.SESSION_RESTARTED,
-      `Session ${id} timer was restarted`,
+      `Session timer restarted`,
+      { sessionId: id },
     );
 
     return session;
@@ -470,6 +476,8 @@ export class SessionService {
   }
 
   private getNestedValue(obj: any, path: string): any {
+    if (!obj) return undefined;
+    
     const keys = path.split('.');
     let current = obj;
 
@@ -481,6 +489,38 @@ export class SessionService {
     }
 
     return current;
+  }
+
+  /**
+   * Convert setting path to human-readable display name
+   * Example: "vibration.intensity" → "Vibration Intensity"
+   */
+  private formatSettingName(settingPath: string): string {
+    const parts = settingPath.split('.');
+    return parts
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  /**
+   * Format value for display
+   */
+  private formatValue(value: any): string {
+    if (typeof value === 'boolean') {
+      return value ? 'enabled' : 'disabled';
+    }
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    if (typeof value === 'string') {
+      // If it's a hex color, keep as is
+      if (value.startsWith('#')) {
+        return value;
+      }
+      // Capitalize first letter of strings
+      return value.charAt(0).toUpperCase() + value.slice(1);
+    }
+    return String(value);
   }
 
   /**
@@ -542,12 +582,49 @@ export class SessionService {
         if (!description) {
           if (processedChanges.length === 1) {
             const change = processedChanges[0];
-            description = `Changed ${change.settingPath} from ${change.oldValue} to ${change.newValue}`;
+            const displayName = this.formatSettingName(change.settingPath);
+            const oldDisplay = this.formatValue(change.oldValue);
+            const newDisplay = this.formatValue(change.newValue);
+            description = `${displayName} changed from ${oldDisplay} to ${newDisplay}`;
           } else {
-            const changeDescriptions = processedChanges.map(
-              c => `${c.settingPath}: ${c.oldValue} → ${c.newValue}`
-            );
-            description = `Multiple settings changed: ${changeDescriptions.join(', ')}`;
+            // Group changes by stimulus type
+            const vibrationChanges = processedChanges.filter(c => c.settingPath.startsWith('vibration.'));
+            const audioChanges = processedChanges.filter(c => c.settingPath.startsWith('audio.'));
+            const visualChanges = processedChanges.filter(c => c.settingPath.startsWith('visual.'));
+            
+            const descriptionParts: string[] = [];
+            
+            if (vibrationChanges.length > 0) {
+              const changes = vibrationChanges.map(c => {
+                const name = this.formatSettingName(c.settingPath);
+                const oldVal = this.formatValue(c.oldValue);
+                const newVal = this.formatValue(c.newValue);
+                return `• ${name}: ${oldVal} → ${newVal}`;
+              }).join('\n');
+              descriptionParts.push(`Vibration:\n${changes}`);
+            }
+            
+            if (audioChanges.length > 0) {
+              const changes = audioChanges.map(c => {
+                const name = this.formatSettingName(c.settingPath);
+                const oldVal = this.formatValue(c.oldValue);
+                const newVal = this.formatValue(c.newValue);
+                return `• ${name}: ${oldVal} → ${newVal}`;
+              }).join('\n');
+              descriptionParts.push(`Audio:\n${changes}`);
+            }
+            
+            if (visualChanges.length > 0) {
+              const changes = visualChanges.map(c => {
+                const name = this.formatSettingName(c.settingPath);
+                const oldVal = this.formatValue(c.oldValue);
+                const newVal = this.formatValue(c.newValue);
+                return `• ${name}: ${oldVal} → ${newVal}`;
+              }).join('\n');
+              descriptionParts.push(`Visual:\n${changes}`);
+            }
+            
+            description = `Stimuli Configuration Adjusted\n\n${descriptionParts.join('\n\n')}`;
           }
         }
       } else if (metadata.settingPath && metadata.newValue !== undefined) {
@@ -572,7 +649,10 @@ export class SessionService {
 
         // Generate description if missing
         if (!description) {
-          description = `Changed ${settingPath} from ${metadata.oldValue} to ${newValue}`;
+          const displayName = this.formatSettingName(settingPath);
+          const oldDisplay = this.formatValue(metadata.oldValue);
+          const newDisplay = this.formatValue(newValue);
+          description = `${displayName} changed from ${oldDisplay} to ${newDisplay}`;
         }
       }
     }

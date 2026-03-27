@@ -66,7 +66,6 @@ export class PatientService {
 
   async findAll(): Promise<Patient[]> {
     return this.patientRepository.find({
-      relations: ['sessions'],
       order: { createdAt: 'DESC' },
     });
   }

@@ -42,27 +42,28 @@ For SETTINGS_CHANGED events:
 - oldValue is OPTIONAL - backend auto-fills it from previous activity logs or initialSettings
 - Backend will auto-generate description if not provided
 
-Available Setting Paths:
-  VISUAL STIMULUS:
-    - visual.enabled (boolean)
-    - visual.color (string, e.g., "#FF0000")
-    - visual.speed (number, 0-100)
-    - visual.movement (string, e.g., "circular", "linear")
-  
+Available Setting Paths (provided by mobile team):
   VIBRATION STIMULUS:
-    - vibration.enabled (boolean)
-    - vibration.intensity (number, 0-100)
-    - vibration.pulse (string, e.g., "steady", "pulsing")
-    - vibration.speed (number, 0-100)
+    - vibration.feedback (boolean) - Enable/disable haptic feedback
+    - vibration.intensity (number, 0-100) - Vibration strength level
+    - vibration.pulse (string) - Pulse pattern (e.g., "steady", "pulsing", "wave")
   
   AUDIO STIMULUS:
-    - audio.enabled (boolean)
-    - audio.volume (number, 0-100)
-    - audio.type (string, e.g., "binaural", "white-noise")`,
+    - audio.feedback (boolean) - Enable/disable audio feedback
+    - audio.volume (number, 0-100) - Audio volume level
+    - audio.sound (string) - Sound type (e.g., "binaural", "white-noise", "nature")
+  
+  VISUAL STIMULUS:
+    - visual.feedback (boolean) - Enable/disable visual feedback
+    - visual.color (string) - Hex color code (e.g., "#FF0000", "#00FF00")
+    - visual.brightness (number, 0-100) - Screen brightness level
+    - visual.movement (string) - Movement pattern (e.g., "circular", "linear", "random")
+    - visual.speed (number, 0-100) - Animation speed`,
     example: {
       changes: [
         { settingPath: 'vibration.intensity', newValue: 70 },
         { settingPath: 'audio.volume', newValue: 45 },
+        { settingPath: 'visual.feedback', newValue: true },
       ],
     },
     examples: {
@@ -85,8 +86,9 @@ Available Setting Paths:
       allVisualSettings: {
         value: {
           changes: [
-            { settingPath: 'visual.enabled', newValue: true },
+            { settingPath: 'visual.feedback', newValue: true },
             { settingPath: 'visual.color', newValue: '#00FF00' },
+            { settingPath: 'visual.brightness', newValue: 80 },
             { settingPath: 'visual.speed', newValue: 70 },
             { settingPath: 'visual.movement', newValue: 'circular' },
           ],
@@ -96,10 +98,9 @@ Available Setting Paths:
       allVibrationSettings: {
         value: {
           changes: [
-            { settingPath: 'vibration.enabled', newValue: true },
+            { settingPath: 'vibration.feedback', newValue: true },
             { settingPath: 'vibration.intensity', newValue: 80 },
             { settingPath: 'vibration.pulse', newValue: 'pulsing' },
-            { settingPath: 'vibration.speed', newValue: 90 },
           ],
         },
         description: 'Change ALL vibration stimulus settings at once',
@@ -107,9 +108,9 @@ Available Setting Paths:
       allAudioSettings: {
         value: {
           changes: [
-            { settingPath: 'audio.enabled', newValue: true },
+            { settingPath: 'audio.feedback', newValue: true },
             { settingPath: 'audio.volume', newValue: 60 },
-            { settingPath: 'audio.type', newValue: 'binaural' },
+            { settingPath: 'audio.sound', newValue: 'binaural' },
           ],
         },
         description: 'Change ALL audio stimulus settings at once',
@@ -117,48 +118,53 @@ Available Setting Paths:
       visualAndVibration: {
         value: {
           changes: [
+            { settingPath: 'visual.feedback', newValue: true },
             { settingPath: 'visual.speed', newValue: 85 },
-            { settingPath: 'visual.movement', newValue: 'circular' },
+            { settingPath: 'visual.brightness', newValue: 75 },
+            { settingPath: 'vibration.feedback', newValue: true },
             { settingPath: 'vibration.intensity', newValue: 90 },
-            { settingPath: 'vibration.pulse', newValue: 'steady' },
           ],
         },
-        description: 'Adjust visual + vibration together',
+        description: 'Enable and adjust visual + vibration together',
       },
       vibrationAndAudio: {
         value: {
           changes: [
+            { settingPath: 'vibration.feedback', newValue: true },
             { settingPath: 'vibration.intensity', newValue: 65 },
+            { settingPath: 'audio.feedback', newValue: true },
             { settingPath: 'audio.volume', newValue: 55 },
-            { settingPath: 'audio.type', newValue: 'white-noise' },
+            { settingPath: 'audio.sound', newValue: 'white-noise' },
           ],
         },
-        description: 'Adjust vibration + audio together',
+        description: 'Enable and adjust vibration + audio together',
       },
       visualAndAudio: {
         value: {
           changes: [
+            { settingPath: 'visual.feedback', newValue: true },
             { settingPath: 'visual.color', newValue: '#FF00FF' },
-            { settingPath: 'visual.speed', newValue: 60 },
+            { settingPath: 'visual.brightness', newValue: 85 },
+            { settingPath: 'audio.feedback', newValue: true },
             { settingPath: 'audio.volume', newValue: 70 },
           ],
         },
-        description: 'Adjust visual + audio together',
+        description: 'Enable and adjust visual + audio together',
       },
       allStimuliComplete: {
         value: {
           changes: [
-            { settingPath: 'visual.enabled', newValue: true },
-            { settingPath: 'visual.color', newValue: '#0000FF' },
-            { settingPath: 'visual.speed', newValue: 70 },
-            { settingPath: 'visual.movement', newValue: 'circular' },
-            { settingPath: 'vibration.enabled', newValue: true },
+            { settingPath: 'vibration.feedback', newValue: true },
             { settingPath: 'vibration.intensity', newValue: 85 },
             { settingPath: 'vibration.pulse', newValue: 'pulsing' },
-            { settingPath: 'vibration.speed', newValue: 95 },
-            { settingPath: 'audio.enabled', newValue: true },
+            { settingPath: 'audio.feedback', newValue: true },
             { settingPath: 'audio.volume', newValue: 65 },
-            { settingPath: 'audio.type', newValue: 'binaural' },
+            { settingPath: 'audio.sound', newValue: 'binaural' },
+            { settingPath: 'visual.feedback', newValue: true },
+            { settingPath: 'visual.color', newValue: '#0000FF' },
+            { settingPath: 'visual.brightness', newValue: 90 },
+            { settingPath: 'visual.movement', newValue: 'circular' },
+            { settingPath: 'visual.speed', newValue: 70 },
           ],
         },
         description: 'Complete overhaul - ALL stimulus settings changed (11 settings)',
