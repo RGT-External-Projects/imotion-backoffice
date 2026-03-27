@@ -164,10 +164,6 @@ export function Analytics() {
     [selectedYear, selectedMonth]
   );
 
-  // Empty filters object for charts that don't need filtering
-  // Memoized so React doesn't see it as a "new" object on each render
-  const emptyFilters = useMemo(() => ({}), []);
-
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
     return selectedTherapist !== 'all' || 
