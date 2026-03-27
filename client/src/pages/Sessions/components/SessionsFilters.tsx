@@ -31,6 +31,17 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
   const device = currentFilters.deviceId || 'all';
   const status = currentFilters.status?.toLowerCase() || 'all-status';
 
+  // Get display text for selected device
+  const getDeviceDisplayText = () => {
+    if (device === 'all') return 'All Devices';
+    const selectedDevice = devices.find(d => d.id === device);
+    if (!selectedDevice) return 'All Devices';
+    if (selectedDevice.deviceName && selectedDevice.deviceName !== selectedDevice.deviceId) {
+      return `${selectedDevice.deviceName} (${selectedDevice.deviceId})`;
+    }
+    return selectedDevice.deviceId;
+  };
+
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -42,7 +53,7 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, onFilterChange]);
+  }, [searchTerm]);
 
   const handleDateSelect = (formattedRange: string, startDate?: Date, endDate?: Date) => {
     setDateRange(formattedRange);
@@ -113,16 +124,26 @@ export function SessionsFilters({ onFilterChange, currentFilters, onExport, hasD
           <span className="text-sm">{dateRange}</span>
         </Button>
         <Select value={device} onValueChange={handleDeviceChange}>
-          <SelectTrigger className="w-[180px] h-10">
-            <SelectValue />
+          <SelectTrigger className="w-[240px]">
+            <span className="text-sm truncate">{getDeviceDisplayText()}</span>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-w-[280px] max-h-[300px] overflow-y-auto">
             <SelectItem value="all">All Devices</SelectItem>
-            {devices?.map((d) => (
-              <SelectItem key={d.id} value={d.id}>
-                {d.deviceName || d.deviceId}
-              </SelectItem>
-            ))}
+            {devices?.map((d) => {
+              const fullText = d.deviceName && d.deviceName !== d.deviceId 
+                ? `${d.deviceName} (${d.deviceId})`
+                : d.deviceId;
+              // Show only device ID in list for clean display
+              return (
+                <SelectItem 
+                  key={d.id} 
+                  value={d.id}
+                  title={fullText}
+                >
+                  {d.deviceId}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={handleStatusChange}>

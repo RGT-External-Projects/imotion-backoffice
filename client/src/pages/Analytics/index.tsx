@@ -108,7 +108,11 @@ export function Analytics() {
   const selectedDeviceLabel = useMemo(() => {
     if (selectedDevice === 'all') return 'All Devices';
     const device = devices.find((d: any) => d.id === selectedDevice);
-    return device?.deviceName || device?.deviceId || 'Select device';
+    if (!device) return 'Select device';
+    if (device.deviceName && device.deviceName !== device.deviceId) {
+      return `${device.deviceName} (${device.deviceId})`;
+    }
+    return device.deviceId;
   }, [selectedDevice, devices]);
 
   // Generate all years from 1900 to current year + 5 (descending order for easy access to recent years)
@@ -209,16 +213,26 @@ export function Analytics() {
           
           {/* Device Filter */}
           <Select value={selectedDevice} onValueChange={handleDeviceChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue>{selectedDeviceLabel}</SelectValue>
+            <SelectTrigger className="w-[240px]">
+              <span className="text-sm truncate">{selectedDeviceLabel}</span>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-w-[280px] max-h-[300px] overflow-y-auto">
               <SelectItem value="all">All Devices</SelectItem>
-              {devices.map((device: any) => (
-                <SelectItem key={device.id} value={device.id}>
-                  {device.deviceName || device.deviceId}
-                </SelectItem>
-              ))}
+              {devices.map((device: any) => {
+                const fullText = device.deviceName && device.deviceName !== device.deviceId 
+                  ? `${device.deviceName} (${device.deviceId})`
+                  : device.deviceId;
+                // Show only device ID in list for clean display
+                return (
+                  <SelectItem 
+                    key={device.id} 
+                    value={device.id}
+                    title={fullText}
+                  >
+                    {device.deviceId}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 
@@ -299,45 +313,45 @@ export function Analytics() {
         </CardContent>
       </Card>
 
-      {/* Bottom Grid - 4 Cards */}
+      {/* Bottom Grid - 4 Cards - ALL NOW RESPECT TOP-LEVEL FILTERS */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Stimuli Combination - No filters, shows all data */}
+        {/* Stimuli Combination - Respects top-level filters */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Stimuli Combination</CardTitle>
           </CardHeader>
           <CardContent>
-            <StimuliCombinationChart hasData={true} filters={emptyFilters} />
+            <StimuliCombinationChart hasData={true} filters={filters} />
           </CardContent>
         </Card>
 
-        {/* Device Usage Sessions - No filters, shows all data */}
+        {/* Device Usage Sessions - Respects top-level filters */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Device Usage Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <DeviceUsageSessionsChart hasData={true} filters={emptyFilters} />
+            <DeviceUsageSessionsChart hasData={true} filters={filters} />
           </CardContent>
         </Card>
 
-        {/* Session Duration Distribution - No filters, shows all data */}
+        {/* Session Duration Distribution - Respects top-level filters */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Session Duration Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <SessionDurationChart hasData={true} filters={emptyFilters} />
+            <SessionDurationChart hasData={true} filters={filters} />
           </CardContent>
         </Card>
 
-        {/* Phone Sessions - No filters, shows all data */}
+        {/* Phone Sessions - Respects top-level filters */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Phone Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <PhoneSessionsChart hasData={true} filters={emptyFilters} />
+            <PhoneSessionsChart hasData={true} filters={filters} />
           </CardContent>
         </Card>
       </div>

@@ -65,7 +65,7 @@ export class AnalyticsChartsService {
       .groupBy('session.deviceId')
       .addGroupBy('device.deviceName')
       .orderBy('sessioncount', 'DESC')
-      .limit(filters.limit || 5)
+      .limit(filters.limit || 999)
       .getRawMany();
 
     // Calculate total sessions for percentage
