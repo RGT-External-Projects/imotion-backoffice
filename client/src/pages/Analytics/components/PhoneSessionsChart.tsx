@@ -1,8 +1,15 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Smartphone } from 'lucide-react';
 import { useTherapistActivity, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PhoneSessionsChartProps {
   hasData: boolean;
@@ -10,9 +17,15 @@ interface PhoneSessionsChartProps {
 }
 
 export const PhoneSessionsChart = memo(function PhoneSessionsChart({ hasData, filters }: PhoneSessionsChartProps) {
+  const [phoneLimitOption, setPhoneLimitOption] = useState<string>('5');
   const { data: therapistData, isLoading } = useTherapistActivity(filters);
   
-  const phoneSessionData = therapistData?.therapists?.slice(0, 5).map((therapist: any) => {
+  // Determine how many phones to show
+  const phoneLimit = phoneLimitOption === 'all' 
+    ? therapistData?.therapists?.length || 999 
+    : parseInt(phoneLimitOption);
+  
+  const phoneSessionData = therapistData?.therapists?.slice(0, phoneLimit).map((therapist: any) => {
     const fullName = therapist.displayName || therapist.phoneNumber || 'Unknown';
     // Truncate long names to 18 characters
     const displayName = fullName.length > 18 ? fullName.substring(0, 18) + '...' : fullName;
@@ -46,8 +59,29 @@ export const PhoneSessionsChart = memo(function PhoneSessionsChart({ hasData, fi
   // Better domain calculation: add 20% padding or minimum of 10
   const xAxisMax = Math.max(maxSessions + Math.ceil(maxSessions * 0.2), 10);
 
+  // Dynamic height based on number of phones: base 150px + 35px per phone
+  const chartHeight = Math.max(280, 150 + (phoneSessionData.length * 35));
+
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <div>
+      {/* Filter Dropdown */}
+      <div className="mb-3 flex justify-end">
+        <Select 
+          value={phoneLimitOption} 
+          onValueChange={(value) => value && setPhoneLimitOption(value)}
+        >
+          <SelectTrigger className="w-[150px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="5">Top 5 Phones</SelectItem>
+            <SelectItem value="10">Top 10 Phones</SelectItem>
+            <SelectItem value="all">All Phones</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <ResponsiveContainer width="100%" height={chartHeight}>
       <BarChart 
         data={phoneSessionData} 
         layout="vertical"
@@ -109,5 +143,6 @@ export const PhoneSessionsChart = memo(function PhoneSessionsChart({ hasData, fi
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </div>
   );
 });
