@@ -31,10 +31,6 @@ export function Dashboard() {
   const [deviceLimitOption, setDeviceLimitOption] = useState<string>('5');
   const deviceLimit = deviceLimitOption === 'all' ? 999 : parseInt(deviceLimitOption);
   
-  // Stimuli Breakdown filter state
-  const [stimuliYear, setStimuliYear] = useState<string>(new Date().getFullYear().toString());
-  const [stimuliMonth, setStimuliMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  
   // Fetch dashboard stats from API
   const { data: stats, isLoading, isError } = useDashboardStats();
   
@@ -88,15 +84,6 @@ export function Dashboard() {
     () => getMonthDateRange(selectedYear, selectedMonth),
     [selectedYear, selectedMonth]
   );
-
-  // Create filters for Stimuli Breakdown chart
-  const stimuliFilters = useMemo(
-    () => getMonthDateRange(stimuliYear, stimuliMonth),
-    [stimuliYear, stimuliMonth]
-  );
-
-  // Get stimuli month label
-  const stimuliMonthLabel = months.find(m => m.value === stimuliMonth)?.label || '';
 
   return (
     <div className="h-full">

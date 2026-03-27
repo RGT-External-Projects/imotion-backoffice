@@ -71,7 +71,11 @@ export const PhoneSessionsChart = memo(function PhoneSessionsChart({ hasData, fi
           onValueChange={(value) => value && setPhoneLimitOption(value)}
         >
           <SelectTrigger className="w-[150px] h-9">
-            <SelectValue />
+            <SelectValue>
+              {phoneLimitOption === '5' ? 'Top 5 Phones' : 
+               phoneLimitOption === '10' ? 'Top 10 Phones' : 
+               'All Phones'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="5">Top 5 Phones</SelectItem>
