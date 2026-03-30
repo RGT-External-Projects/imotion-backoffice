@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { Clock } from 'lucide-react';
+import BluetoothIcon from '@/assets/bluetooth.svg';
 import { useSessionDurationDistribution, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,9 +28,7 @@ export const SessionDurationChart = memo(function SessionDurationChart({ hasData
   if (!hasData) {
     return (
       <div className="h-[280px] flex flex-col items-center justify-center">
-        <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
-          <Clock className="h-6 w-6 text-blue-500" />
-        </div>
+        <img src={BluetoothIcon} alt="" className="h-12 w-12 text-blue-400 mb-3" />
         <p className="text-sm text-muted-foreground">No data available</p>
       </div>
     );

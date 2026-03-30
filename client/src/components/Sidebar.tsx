@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Calendar, Smartphone, BarChart3, Settings } from 'lucide-react';
+import ImotionLogo from '@/assets/imotion-logo.svg';
 import { cn } from '@/lib/utils';
 
 const navigation = [
@@ -16,7 +17,11 @@ export function Sidebar() {
     <div className="flex h-screen w-64 flex-col bg-[#0a1628] text-white">
       {/* Logo */}
       <div className="flex h-16 items-center px-6">
-        <h1 className="text-2xl font-bold">iMotion</h1>
+        <img
+          src={ImotionLogo}
+          alt="iMotion"
+          className="h-6 w-auto"
+        />
       </div>
 
       {/* Navigation */}

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
+import TimeIcon from '@/assets/time.svg';
 import { useStimuliBreakdown, type AnalyticsFilters } from '@/hooks/useAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,6 +20,18 @@ export const StimuliCombinationChart = memo(function StimuliCombinationChart({ h
     { name: 'Vibration', value: stimuliData.vibration, color: '#22c55e' },
   ] : [];
 
+  // Consider it "no data" if:
+  // - there's no stimuliData
+  // - or all stimulus values are 0/undefined / non-numeric
+  const totalStimuliValue =
+    Number(stimuliData?.visual ?? 0) +
+    Number(stimuliData?.audio ?? 0) +
+    Number(stimuliData?.vibration ?? 0);
+  const isEmptyState =
+    !stimuliData ||
+    !Number.isFinite(totalStimuliValue) ||
+    totalStimuliValue <= 0;
+
   if (isLoading) {
     return (
       <div className="h-[280px] space-y-3">
@@ -27,10 +40,11 @@ export const StimuliCombinationChart = memo(function StimuliCombinationChart({ h
     );
   }
 
-  if (!hasData || chartData.length === 0) {
+  if (isEmptyState) {
     return (
-      <div className="h-[280px] flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">No data available</p>
+      <div className="h-[280px] flex flex-col items-center justify-center py-12">
+        <img src={TimeIcon} alt="" className="h-12 w-12 text-blue-400 mb-3" />
+        <p className="text-sm text-muted-foreground">No data yet</p>
       </div>
     );
   }

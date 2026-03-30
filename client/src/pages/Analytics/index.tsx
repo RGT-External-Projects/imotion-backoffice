@@ -47,7 +47,8 @@ export function Analytics() {
 
   const therapists = therapistsData || [];
   const devices = devicesData?.data || [];
-  const hasData = !!stats && !statsLoading;
+  // We consider there to be data only when stats are loaded AND there is at least one session
+  const hasData = !!stats && !statsLoading && (stats.totalSessions ?? 0) > 0;
   
   // Debug logs
   console.log('Analytics Filters:', filters);
@@ -305,7 +306,7 @@ export function Analytics() {
           </div>
         </CardHeader>
         <CardContent className="pb-8">
-          <SessionOverTimeChart hasData={true} filters={sessionsOverTimeFilters} />
+          <SessionOverTimeChart hasData={hasData} filters={sessionsOverTimeFilters} />
         </CardContent>
       </Card>
 
@@ -317,7 +318,7 @@ export function Analytics() {
             <CardTitle className="text-base font-semibold">Stimuli Combination</CardTitle>
           </CardHeader>
           <CardContent>
-            <StimuliCombinationChart hasData={true} filters={filters} />
+            <StimuliCombinationChart hasData={hasData} filters={filters} />
           </CardContent>
         </Card>
 
@@ -327,7 +328,7 @@ export function Analytics() {
             <CardTitle className="text-base font-semibold">Device Usage Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <DeviceUsageSessionsChart hasData={true} filters={filters} />
+            <DeviceUsageSessionsChart hasData={hasData} filters={filters} />
           </CardContent>
         </Card>
 
@@ -337,7 +338,7 @@ export function Analytics() {
             <CardTitle className="text-base font-semibold">Session Duration Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <SessionDurationChart hasData={true} filters={filters} />
+            <SessionDurationChart hasData={hasData} filters={filters} />
           </CardContent>
         </Card>
 
@@ -347,7 +348,7 @@ export function Analytics() {
             <CardTitle className="text-base font-semibold">Phone Sessions</CardTitle>
           </CardHeader>
           <CardContent>
-            <PhoneSessionsChart hasData={true} filters={filters} />
+            <PhoneSessionsChart hasData={hasData} filters={filters} />
           </CardContent>
         </Card>
       </div>
