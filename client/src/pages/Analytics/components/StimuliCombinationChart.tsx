@@ -13,6 +13,8 @@ export const StimuliCombinationChart = memo(function StimuliCombinationChart({ h
   // Fetch real data from API
   const { data: stimuliData, isLoading } = useStimuliBreakdown(filters);
 
+  console.log("has data", hasData)
+
   // Transform API data for bar chart
   const chartData = stimuliData ? [
     { name: 'Visual', value: stimuliData.visual, color: '#2563eb' },

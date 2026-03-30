@@ -22,10 +22,11 @@ const formatDuration = (seconds: number | null): string => {
 // Helper to get status badge styling
 const getStatusBadge = (status: string) => {
   const styles = {
-    'COMPLETED': 'bg-emerald-700 text-white hover:bg-emerald-700 border-none px-3 py-1 h-8 rounded-lg font-normal text-sm',
-    'IN_PROGRESS': 'bg-blue-100 text-blue-700 hover:bg-blue-100',
-    'PAUSED': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100',
-    'INTERRUPTED': 'bg-red-100 text-red-700 hover:bg-red-100',
+    // Match design: solid green pill for completed, light blue pill for in-progress, etc.
+    COMPLETED: 'bg-[#2F7D4A] text-white',
+    IN_PROGRESS: 'bg-blue-100 text-blue-700',
+    PAUSED: 'bg-yellow-100 text-yellow-700',
+    INTERRUPTED: 'bg-red-100 text-red-700',
   };
   
   const labels = {
@@ -52,15 +53,7 @@ export function SessionDetails() {
     return (
       <div className="h-full flex flex-col">
         <div className="p-6 border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => navigate('/sessions')}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="h-6 w-6 text-foreground" />
-            </button>
-            <Skeleton className="h-10 w-48" />
-          </div>
+          <Skeleton className="h-10 w-48 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="flex-1 flex">
@@ -97,18 +90,7 @@ export function SessionDetails() {
     <div className="h-full flex flex-col">
       {/* Header Section - Fixed */}
       <div className="p-6 border-b border-gray-200 bg-white">
-        {/* Session Header */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/sessions')}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer group"
-            title="Back to Sessions"
-          >
-            <ArrowLeft className="h-6 w-6 text-foreground group-hover:text-blue-600 transition-colors" />
-          </button>
-          <h1 className="text-3xl font-bold">Session Details</h1>
-          <span className="text-3xl font-light text-muted-foreground">#{session.id.slice(0, 8)}</span>
-        </div>
+        <h1 className="text-3xl font-bold">{session.id.slice(0, 13)}...</h1>
         <div className="mt-2">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>Phone ID: {session.therapistPhone?.displayName || session.therapistPhone?.phoneNumber || 'N/A'}</span>
@@ -117,15 +99,20 @@ export function SessionDetails() {
             <span>•</span>
             <span>Date: {formattedDate}</span>
             <span>•</span>
-            <Badge className={statusBadge.className}>
+            <Badge
+              className={cn(
+                'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium border-none',
+                statusBadge.className,
+              )}
+            >
               {session.status === 'COMPLETED' ? (
                 <div className="flex items-center gap-2">
-                  <div className="bg-white rounded-full p-0.5 flex items-center justify-center">
+                  <div className="bg-white rounded-sm px-0.5 flex items-center justify-center">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#106334" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   </div>
-                  <span className="text-lg font-medium tracking-wide">Completed</span>
+                  <span>Completed</span>
                 </div>
               ) : (
                 <>
@@ -246,7 +233,12 @@ export function SessionDetails() {
                       <ActivityIcon className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Status</p>
-                        <Badge className={cn(statusBadge.className, "mt-1")}>
+                        <Badge
+                          className={cn(
+                            'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium border-none mt-1',
+                            statusBadge.className,
+                          )}
+                        >
                           {session.status === 'COMPLETED' ? (
                             <div className="flex items-center gap-2">
                               <div className="bg-white rounded-full p-0.5 flex items-center justify-center">

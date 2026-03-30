@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Smartphone, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Calendar, Smartphone, BarChart3 } from 'lucide-react';
 import ImotionLogo from '@/assets/imotion-logo.svg';
 import { cn } from '@/lib/utils';
 

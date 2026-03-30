@@ -24,13 +24,6 @@ export function DeviceDetails() {
     return (
       <div className="h-full flex flex-col">
         <div className="p-6 border-b border-gray-200 bg-white">
-          <button
-            onClick={() => navigate('/devices')}
-            className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Back to Devices</span>
-          </button>
           <Skeleton className="h-10 w-40 mb-2" />
           <Skeleton className="h-4 w-64" />
         </div>
@@ -69,14 +62,6 @@ export function DeviceDetails() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 bg-white">
-        <button
-          onClick={() => navigate('/devices')}
-          className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Back to Devices</span>
-        </button>
-
         <div>
           <h1 className="text-3xl font-bold mb-2">{device.deviceId}</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
