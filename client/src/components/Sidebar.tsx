@@ -27,7 +27,10 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navigation.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = item.href === '/' 
+            ? location.pathname === '/' 
+            : location.pathname.startsWith(item.href);
+          
           return (
             <Link
               key={item.name}
@@ -46,16 +49,22 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Settings */}
+      {/* Settings section hidden for now
       <div className="border-t border-gray-800 p-3">
         <Link
           to="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-white"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            location.pathname.startsWith('/settings')
+              ? "bg-blue-600 text-white"
+              : "text-gray-300 hover:bg-gray-800/50 hover:text-white"
+          )}
         >
           <Settings className="h-5 w-5" strokeWidth={2} />
           Settings
         </Link>
       </div>
+      */}
     </div>
   );
 }
