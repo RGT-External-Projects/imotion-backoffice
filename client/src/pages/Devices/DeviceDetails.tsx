@@ -11,7 +11,7 @@ import { DevicePhoneHistory } from './components/DevicePhoneHistory';
 import { DeviceOverviewTab } from './components/DeviceOverviewTab';
 import { DeviceTimelineTab } from './components/DeviceTimelineTab';
 
-type TabType = 'overview' | 'timeline';
+type TabType = 'overview' | 'activity';
 
 export function DeviceDetails() {
   const navigate = useNavigate();
@@ -121,15 +121,15 @@ export function DeviceDetails() {
               Overview
             </button>
             <button
-              onClick={() => setActiveTab('timeline')}
+              onClick={() => setActiveTab('activity')}
               className={cn(
                 'flex-1 px-6 py-2.5 font-medium rounded-lg transition-colors',
-                activeTab === 'timeline'
+                activeTab === 'activity'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-600 hover:bg-gray-100'
               )}
             >
-              Timeline
+              Activity
             </button>
           </div>
 

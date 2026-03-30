@@ -22,7 +22,7 @@ const formatDuration = (seconds: number | null): string => {
 // Helper to get status badge styling
 const getStatusBadge = (status: string) => {
   const styles = {
-    'COMPLETED': 'bg-green-100 text-green-700 hover:bg-green-100',
+    'COMPLETED': 'bg-emerald-700 text-white hover:bg-emerald-700 border-none px-3 py-1 h-8 rounded-lg font-normal text-sm',
     'IN_PROGRESS': 'bg-blue-100 text-blue-700 hover:bg-blue-100',
     'PAUSED': 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100',
     'INTERRUPTED': 'bg-red-100 text-red-700 hover:bg-red-100',
@@ -52,14 +52,15 @@ export function SessionDetails() {
     return (
       <div className="h-full flex flex-col">
         <div className="p-6 border-b border-gray-200 bg-white">
-          <button
-            onClick={() => navigate('/sessions')}
-            className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Back to Sessions</span>
-          </button>
-          <Skeleton className="h-10 w-32 mb-2" />
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => navigate('/sessions')}
+              className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="h-6 w-6 text-foreground" />
+            </button>
+            <Skeleton className="h-10 w-48" />
+          </div>
           <Skeleton className="h-4 w-96" />
         </div>
         <div className="flex-1 flex">
@@ -96,18 +97,19 @@ export function SessionDetails() {
     <div className="h-full flex flex-col">
       {/* Header Section - Fixed */}
       <div className="p-6 border-b border-gray-200 bg-white">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate('/sessions')}
-          className="mb-4 flex items-center gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Back to Sessions</span>
-        </button>
-
         {/* Session Header */}
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{session.id.slice(0, 8)}...</h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/sessions')}
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer group"
+            title="Back to Sessions"
+          >
+            <ArrowLeft className="h-6 w-6 text-foreground group-hover:text-blue-600 transition-colors" />
+          </button>
+          <h1 className="text-3xl font-bold">Session Details</h1>
+          <span className="text-3xl font-light text-muted-foreground">#{session.id.slice(0, 8)}</span>
+        </div>
+        <div className="mt-2">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>Phone ID: {session.therapistPhone?.displayName || session.therapistPhone?.phoneNumber || 'N/A'}</span>
             <span>•</span>
@@ -116,8 +118,21 @@ export function SessionDetails() {
             <span>Date: {formattedDate}</span>
             <span>•</span>
             <Badge className={statusBadge.className}>
-              <span className="mr-1.5">●</span>
-              {statusBadge.label}
+              {session.status === 'COMPLETED' ? (
+                <div className="flex items-center gap-2">
+                  <div className="bg-white rounded-full p-0.5 flex items-center justify-center">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#106334" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </div>
+                  <span className="text-lg font-medium tracking-wide">Completed</span>
+                </div>
+              ) : (
+                <>
+                  <span className="mr-1.5">●</span>
+                  {statusBadge.label}
+                </>
+              )}
             </Badge>
           </div>
         </div>
@@ -126,7 +141,8 @@ export function SessionDetails() {
       {/* Two Column Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Column - Stimulus Cards (Not Scrollable) */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6 overflow-y-auto">
+          <h3 className="font-semibold mb-6 text-lg">Stimuli Used</h3>
           <StimulusCards
             initialSettings={session.initialSettings}
             finalSettings={session.finalSettings}
@@ -231,8 +247,21 @@ export function SessionDetails() {
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Status</p>
                         <Badge className={cn(statusBadge.className, "mt-1")}>
-                          <span className="mr-1.5">●</span>
-                          {statusBadge.label}
+                          {session.status === 'COMPLETED' ? (
+                            <div className="flex items-center gap-2">
+                              <div className="bg-white rounded-full p-0.5 flex items-center justify-center">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#106334" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              </div>
+                              <span className="font-medium">Completed</span>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="mr-1.5">●</span>
+                              {statusBadge.label}
+                            </>
+                          )}
                         </Badge>
                       </div>
                     </div>
