@@ -1,13 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Calendar, Smartphone, BarChart3 } from 'lucide-react';
 import ImotionLogo from '@/assets/imotion-logo.svg';
 import { cn } from '@/lib/utils';
+import HomeIcon from '@/assets/icons/HomeIcon';
+import SessionsIcon from '@/assets/icons/SessionsIcon';
+import BluetoothIcon from '@/assets/icons/BluetoothIcon';
+import AnalyticsIcon from '@/assets/icons/AnalyticsIcon';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Sessions', href: '/sessions', icon: Calendar },
-  { name: 'Devices', href: '/devices', icon: Smartphone },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Sessions', href: '/sessions', icon: SessionsIcon },
+  { name: 'Devices', href: '/devices', icon: BluetoothIcon },
+  { name: 'Analytics', href: '/analytics', icon: AnalyticsIcon },
 ];
 
 export function Sidebar() {
@@ -42,7 +45,7 @@ export function Sidebar() {
                   : "text-gray-300 hover:bg-gray-800/50 hover:text-white"
               )}
             >
-              <item.icon className="h-5 w-5" strokeWidth={2} />
+              <item.icon className="h-5 w-5" />
               {item.name}
             </Link>
           );

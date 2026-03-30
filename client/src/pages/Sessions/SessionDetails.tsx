@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Smartphone } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { StimulusCards } from './components/StimulusCards';
@@ -14,6 +13,7 @@ import PatientIcon from '@/assets/icons/PatientIcon';
 import DurationIcon from '@/assets/icons/DurationIcon';
 import StatusIcon from '@/assets/icons/StatusIcon';
 import CalendarIcon from '@/assets/icons/CalendarIcon';
+import { StatusPill } from '@/components/StatusPill';
 
 type TabType = 'overview' | 'activity';
 
@@ -26,8 +26,9 @@ const formatDuration = (seconds: number | null): string => {
 };
 
 // Base status pill styling (shape, padding, typography)
+// Larger pill with more padding so it stands out like the design reference.
 const STATUS_BADGE_BASE_CLASS =
-  'inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium border-none';
+  'inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium border-none';
 
 // Helper to get status badge color styling
 const getStatusBadge = (status: string) => {
@@ -108,8 +109,7 @@ export function SessionDetails() {
             <span>Device ID: {session.device?.deviceId || 'N/A'}</span>
             <span>•</span>
             <span>Date: {formattedDate}</span>
-            <span>•</span>
-            <Badge
+            <StatusPill
               className={cn(STATUS_BADGE_BASE_CLASS, statusBadge.className)}
             >
               {session.status === 'COMPLETED' ? (
@@ -127,7 +127,7 @@ export function SessionDetails() {
                   {statusBadge.label}
                 </>
               )}
-            </Badge>
+            </StatusPill>
           </div>
         </div>
       </div>
@@ -252,7 +252,7 @@ export function SessionDetails() {
                       <StatusIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Status</p>
-                        <Badge
+                        <StatusPill
                           className={cn(STATUS_BADGE_BASE_CLASS, 'mt-1', statusBadge.className)}
                         >
                           {session.status === 'COMPLETED' ? (
@@ -270,7 +270,7 @@ export function SessionDetails() {
                               {statusBadge.label}
                             </>
                           )}
-                        </Badge>
+                        </StatusPill>
                       </div>
                     </div>
                   </div>

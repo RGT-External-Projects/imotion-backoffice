@@ -48,9 +48,10 @@ export const SessionOverTimeChart = memo(function SessionOverTimeChart({ hasData
           dataKey="date" 
           tick={{ fontSize: 12, fill: '#6b7280' }}
           axisLine={{ stroke: '#e5e7eb' }}
-          angle={-45}
-          textAnchor="end"
-          height={70}
+          // Keep labels horizontal (no tilt)
+          angle={0}
+          textAnchor="middle"
+          height={40}
           interval={1}
         />
         <YAxis 
