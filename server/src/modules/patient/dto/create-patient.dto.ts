@@ -20,4 +20,12 @@ export class CreatePatientDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiPropertyOptional({
+    description: 'Therapist phone unique identifier (natural ID / phone number, not database UUID)',
+    example: 'ABC-123-PHONE-456',
+  })
+  @IsString()
+  @IsOptional()
+  therapistPhoneUniqueId?: string;
 }

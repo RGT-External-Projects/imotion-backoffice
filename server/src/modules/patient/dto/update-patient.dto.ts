@@ -1,5 +1,5 @@
 import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsObject } from 'class-validator';
+import { IsOptional, IsObject, IsString } from 'class-validator';
 import { CreatePatientDto } from './create-patient.dto';
 import { SessionSettings } from '../../session/entities/session.entity';
 
@@ -29,4 +29,12 @@ export class UpdatePatientDto extends PartialType(CreatePatientDto) {
   @IsObject()
   @IsOptional()
   preferredSettings?: SessionSettings | null;
+
+  @ApiPropertyOptional({
+    description: 'Therapist phone unique identifier (natural ID / phone number, not database UUID)',
+    example: 'ABC-123-PHONE-456',
+  })
+  @IsString()
+  @IsOptional()
+  therapistPhoneUniqueId?: string;
 }
