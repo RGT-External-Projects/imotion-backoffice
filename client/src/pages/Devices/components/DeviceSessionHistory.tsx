@@ -39,7 +39,7 @@ export function DeviceSessionHistory({ sessions }: DeviceSessionHistoryProps) {
     <Card className="mb-6">
       <CardHeader>
         <CardTitle className="text-base font-semibold">
-          Session History ({totalSessions})
+          Session History
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -49,11 +49,11 @@ export function DeviceSessionHistory({ sessions }: DeviceSessionHistoryProps) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
-                    <th className="pb-3 font-medium">Session ID</th>
-                    <th className="pb-3 font-medium">Phone ID</th>
-                    <th className="pb-3 font-medium">Patient Code</th>
-                    <th className="pb-3 font-medium">Session Timestamp</th>
-                    <th className="pb-3 font-medium">Duration</th>
+                    <th className="pb-3 font-semibold">Session ID</th>
+                    <th className="pb-3 font-semibold">Phone ID</th>
+                    <th className="pb-3 font-semibold">Patient Code</th>
+                    <th className="pb-3 font-semibold">Session Timestamp</th>
+                    <th className="pb-3 font-semibold">Duration</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
