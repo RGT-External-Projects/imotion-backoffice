@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Session, SessionSettings } from '../../session/entities/session.entity';
+import { TherapistPhone } from '../../therapist-phone/entities/therapist-phone.entity';
 
 @Entity('patients')
 export class Patient {
@@ -27,6 +30,16 @@ export class Patient {
 
   @Column({ default: 'active' })
   status: string;
+
+  @Column({ name: 'therapist_phone_id', type: 'uuid', nullable: true })
+  therapistPhoneId: string | null;
+
+  @ManyToOne(() => TherapistPhone, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'therapist_phone_id' })
+  therapistPhone?: TherapistPhone | null;
 
   @Column({ type: 'jsonb', nullable: true, name: 'preferred_settings' })
   preferredSettings: SessionSettings | null;

@@ -4,12 +4,15 @@ import { Repository } from 'typeorm';
 import { Patient } from './entities/patient.entity';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { TherapistPhone } from '../therapist-phone/entities/therapist-phone.entity';
 
 @Injectable()
 export class PatientService {
   constructor(
     @InjectRepository(Patient)
     private readonly patientRepository: Repository<Patient>,
+    @InjectRepository(TherapistPhone)
+    private readonly therapistPhoneRepository: Repository<TherapistPhone>,
   ) {}
 
   async create(createPatientDto: CreatePatientDto): Promise<Patient> {
@@ -24,6 +27,23 @@ export class PatientService {
       patient.notes = createPatientDto.notes;
     }
     patient.status = createPatientDto.status || 'active';
+
+    // Resolve therapist phone by natural ID / phone number (similar to SessionService)
+    if (createPatientDto.therapistPhoneUniqueId) {
+      let therapistPhone = await this.therapistPhoneRepository.findOne({
+        where: { phoneNumber: createPatientDto.therapistPhoneUniqueId },
+      });
+
+      if (!therapistPhone) {
+        therapistPhone = this.therapistPhoneRepository.create({
+          phoneNumber: createPatientDto.therapistPhoneUniqueId,
+          displayName: createPatientDto.therapistPhoneUniqueId,
+        });
+        therapistPhone = await this.therapistPhoneRepository.save(therapistPhone);
+      }
+
+      patient.therapistPhoneId = therapistPhone.id;
+    }
     return this.patientRepository.save(patient);
   }
 
@@ -68,6 +88,25 @@ export class PatientService {
     return this.patientRepository.find({
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async findByTherapistPhone(therapistPhoneId: string): Promise<Patient[]> {
+    return this.patientRepository.find({
+      where: { therapistPhoneId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByTherapistPhoneUniqueId(therapistPhoneUniqueId: string): Promise<Patient[]> {
+    const therapistPhone = await this.therapistPhoneRepository.findOne({
+      where: { phoneNumber: therapistPhoneUniqueId },
+    });
+
+    if (!therapistPhone) {
+      return [];
+    }
+
+    return this.findByTherapistPhone(therapistPhone.id);
   }
 
   async findOne(id: string): Promise<Patient> {

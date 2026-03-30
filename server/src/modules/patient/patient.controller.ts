@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,6 +15,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { PatientService } from './patient.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
@@ -35,8 +37,29 @@ export class PatientController {
 
   @Get()
   @ApiOperation({ summary: 'Get all patients' })
+  @ApiQuery({
+    name: 'therapistPhoneId',
+    required: false,
+    description: 'Therapist phone UUID to filter patients by',
+  })
+  @ApiQuery({
+    name: 'therapistPhoneUniqueId',
+    required: false,
+    description: 'Therapist phone unique identifier / phone number to filter patients by',
+  })
   @ApiResponse({ status: 200, description: 'List of all patients' })
-  findAll() {
+  findAll(
+    @Query('therapistPhoneId') therapistPhoneId?: string,
+    @Query('therapistPhoneUniqueId') therapistPhoneUniqueId?: string,
+  ) {
+    if (therapistPhoneId) {
+      return this.patientService.findByTherapistPhone(therapistPhoneId);
+    }
+    if (therapistPhoneUniqueId) {
+      return this.patientService.findByTherapistPhoneUniqueId(
+        therapistPhoneUniqueId,
+      );
+    }
     return this.patientService.findAll();
   }
 
