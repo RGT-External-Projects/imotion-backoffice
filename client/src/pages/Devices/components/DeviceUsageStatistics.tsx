@@ -1,4 +1,6 @@
-import { Activity, Clock, Smartphone } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
+import SessionsIcon from '@/assets/sessions.svg';
+import AnalyticsIcon from '@/assets/analytics.svg';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface DeviceUsageStatisticsProps {
@@ -19,8 +21,12 @@ export function DeviceUsageStatistics({
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Activity className="h-5 w-5 text-blue-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-blue-100">
+                <img
+                  src={SessionsIcon}
+                  alt="Total sessions icon"
+                  className="h-5 w-5"
+                />
               </div>
               <p className="text-sm text-muted-foreground">Total Sessions</p>
             </div>
@@ -31,8 +37,12 @@ export function DeviceUsageStatistics({
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-cyan-50 rounded-lg">
-                <Clock className="h-5 w-5 text-cyan-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-cyan-100">
+                <img
+                  src={AnalyticsIcon}
+                  alt="Average session duration icon"
+                  className="h-5 w-5"
+                />
               </div>
               <p className="text-sm text-muted-foreground">Avg Session Duration</p>
             </div>
@@ -43,7 +53,7 @@ export function DeviceUsageStatistics({
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-green-100">
                 <Smartphone className="h-5 w-5 text-green-600" />
               </div>
               <p className="text-sm text-muted-foreground">Phones Connected</p>

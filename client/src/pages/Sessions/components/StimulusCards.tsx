@@ -1,6 +1,8 @@
-import { Eye, Smartphone, Activity } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { SessionSettings } from '@/backend/session.service';
+import EyeIcon from '@/assets/icons/EyeIcon';
+import VibrationIcon from '@/assets/icons/VibrationIcon';
+import AudioIcon from '@/assets/icons/AudioIcon';
 
 interface StimulusCardsProps {
   initialSettings: SessionSettings;
@@ -35,12 +37,61 @@ export function StimulusCards({ initialSettings, finalSettings }: StimulusCardsP
 
   return (
     <div className="space-y-4">
+      {/* Visual */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 rounded-xl bg-slate-100 flex items-center justify-center">
+              <EyeIcon size={20} />
+            </div>
+            <div>
+              <h3 className="font-semibold">Visual</h3>
+              <p className={`text-sm ${settings.visual?.feedback ? 'text-green-600' : 'text-gray-500'}`}>
+                {settings.visual?.feedback ? 'Enabled' : 'Disabled'}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Feedback:</span>
+              <span className="font-medium">{formatValue(settings.visual?.feedback)}</span>
+            </div>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Color:</span>
+              <span className="font-medium inline-flex items-center gap-2">
+                {settings.visual?.color ? (
+                  <>
+                    <span
+                      className="inline-block w-4 h-4 rounded-full border"
+                      style={{ backgroundColor: settings.visual.color }}
+                    />
+                    {settings.visual.color}
+                  </>
+                ) : '—'}
+              </span>
+            </div>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Brightness:</span>
+              <span className="font-medium">{formatValue(settings.visual?.brightness)}</span>
+            </div>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Movement:</span>
+              <span className="font-medium">{formatValue(settings.visual?.movement)}</span>
+            </div>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Speed:</span>
+              <span className="font-medium">{formatValue(settings.visual?.speed)}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Vibration */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-purple-50">
-              <Smartphone className="h-5 w-5 text-purple-600" />
+            <div className="p-2 rounded-xl bg-slate-100 flex items-center justify-center">
+              <VibrationIcon size={20} />
             </div>
             <div>
               <h3 className="font-semibold">Vibration</h3>
@@ -49,17 +100,17 @@ export function StimulusCards({ initialSettings, finalSettings }: StimulusCardsP
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Feedback: </span>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Feedback:</span>
               <span className="font-medium">{formatValue(settings.vibration?.feedback)}</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Intensity: </span>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Intensity:</span>
               <span className="font-medium">{formatValue(settings.vibration?.intensity)}</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Pulse Pattern: </span>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Pulse:</span>
               <span className="font-medium">{formatValue(settings.vibration?.pulse)}</span>
             </div>
           </div>
@@ -70,8 +121,8 @@ export function StimulusCards({ initialSettings, finalSettings }: StimulusCardsP
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-green-50">
-              <Activity className="h-5 w-5 text-green-600" />
+            <div className="p-2 rounded-xl bg-slate-100 flex items-center justify-center">
+              <AudioIcon size={20} />
             </div>
             <div>
               <h3 className="font-semibold">Audio</h3>
@@ -80,67 +131,18 @@ export function StimulusCards({ initialSettings, finalSettings }: StimulusCardsP
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Feedback: </span>
+          <div className="flex flex-wrap gap-2 text-sm">
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Feedback:</span>
               <span className="font-medium">{formatValue(settings.audio?.feedback)}</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Volume: </span>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Volume:</span>
               <span className="font-medium">{formatValue(settings.audio?.volume)}</span>
             </div>
-            <div>
-              <span className="text-muted-foreground">Sound Type: </span>
+            <div className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+              <span className="text-muted-foreground mr-1">Sound:</span>
               <span className="font-medium">{formatValue(settings.audio?.sound)}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Visual */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-blue-50">
-              <Eye className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Visual</h3>
-              <p className={`text-sm ${settings.visual?.feedback ? 'text-green-600' : 'text-gray-500'}`}>
-                {settings.visual?.feedback ? 'Enabled' : 'Disabled'}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">Feedback: </span>
-              <span className="font-medium">{formatValue(settings.visual?.feedback)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Color: </span>
-              <span className="font-medium inline-flex items-center gap-2">
-                {settings.visual?.color ? (
-                  <>
-                    <span 
-                      className="inline-block w-4 h-4 rounded border"
-                      style={{ backgroundColor: settings.visual.color }}
-                    />
-                    {settings.visual.color}
-                  </>
-                ) : '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Brightness: </span>
-              <span className="font-medium">{formatValue(settings.visual?.brightness)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Movement: </span>
-              <span className="font-medium">{formatValue(settings.visual?.movement)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Speed: </span>
-              <span className="font-medium">{formatValue(settings.visual?.speed)}</span>
             </div>
           </div>
         </CardContent>

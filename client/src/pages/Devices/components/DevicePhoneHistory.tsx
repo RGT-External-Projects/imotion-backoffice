@@ -31,7 +31,7 @@ export function DevicePhoneHistory({ therapistPhones }: DevicePhoneHistoryProps)
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-semibold">
-          Phone Connection History ({totalPhones})
+          Phone Connection History
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -41,9 +41,9 @@ export function DevicePhoneHistory({ therapistPhones }: DevicePhoneHistoryProps)
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
-                    <th className="pb-3 font-medium">Phone ID</th>
-                    <th className="pb-3 font-medium">Sessions run</th>
-                    <th className="pb-3 font-medium">Last connected</th>
+                    <th className="pb-3 font-semibold">Phone ID</th>
+                    <th className="pb-3 font-semibold">Sessions run</th>
+                    <th className="pb-3 font-semibold">Last connected</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">

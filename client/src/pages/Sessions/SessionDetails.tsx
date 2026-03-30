@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Activity as ActivityIcon, Smartphone, User, Clock } from 'lucide-react';
+import { ArrowLeft, Smartphone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -8,6 +8,12 @@ import { StimulusCards } from './components/StimulusCards';
 import { ActivityTab } from './components/ActivityTab';
 import { useSession } from '@/hooks/useSessions';
 import { format } from 'date-fns';
+import FirmwareIcon from '@/assets/icons/FirmwareIcon';
+import BluetoothIcon from '@/assets/icons/BluetoothIcon';
+import PatientIcon from '@/assets/icons/PatientIcon';
+import DurationIcon from '@/assets/icons/DurationIcon';
+import StatusIcon from '@/assets/icons/StatusIcon';
+import CalendarIcon from '@/assets/icons/CalendarIcon';
 
 type TabType = 'overview' | 'activity';
 
@@ -19,7 +25,11 @@ const formatDuration = (seconds: number | null): string => {
   return `${minutes}m ${secs}s`;
 };
 
-// Helper to get status badge styling
+// Base status pill styling (shape, padding, typography)
+const STATUS_BADGE_BASE_CLASS =
+  'inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium border-none';
+
+// Helper to get status badge color styling
 const getStatusBadge = (status: string) => {
   const styles = {
     // Match design: solid green pill for completed, light blue pill for in-progress, etc.
@@ -100,10 +110,7 @@ export function SessionDetails() {
             <span>Date: {formattedDate}</span>
             <span>•</span>
             <Badge
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium border-none',
-                statusBadge.className,
-              )}
+              className={cn(STATUS_BADGE_BASE_CLASS, statusBadge.className)}
             >
               {session.status === 'COMPLETED' ? (
                 <div className="flex items-center gap-2">
@@ -172,7 +179,7 @@ export function SessionDetails() {
                 <div className="space-y-4">
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <ActivityIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <FirmwareIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Session ID</p>
                         <p className="text-xl font-semibold text-gray-900">{session.id.slice(0, 13)}...</p>
@@ -182,7 +189,7 @@ export function SessionDetails() {
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <Smartphone className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <BluetoothIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Device ID</p>
                         <p className="text-xl font-semibold text-gray-900">
@@ -206,7 +213,7 @@ export function SessionDetails() {
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <PatientIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Patient Code</p>
                         <p className="text-xl font-semibold text-gray-900">
@@ -218,7 +225,19 @@ export function SessionDetails() {
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <CalendarIcon size={20} className="text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-500 mb-2">Last used</p>
+                        <p className="text-xl font-semibold text-gray-900">
+                          {formattedDate}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <DurationIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Duration</p>
                         <p className="text-xl font-semibold text-gray-900">
@@ -230,14 +249,11 @@ export function SessionDetails() {
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start gap-3">
-                      <ActivityIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <StatusIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-sm text-gray-500 mb-2">Status</p>
                         <Badge
-                          className={cn(
-                            'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium border-none mt-1',
-                            statusBadge.className,
-                          )}
+                          className={cn(STATUS_BADGE_BASE_CLASS, 'mt-1', statusBadge.className)}
                         >
                           {session.status === 'COMPLETED' ? (
                             <div className="flex items-center gap-2">
