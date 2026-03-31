@@ -96,7 +96,8 @@ export function RecentSessionsTable({ hasData }: RecentSessionsTableProps) {
               <td className="py-4">{session.duration}</td>
               <td className="py-4">
                 <button 
-                  onClick={() => navigate(`/sessions/${session.sessionId}`)}
+                  // Use the full UUID for routing; sessionId is just a short display code
+                  onClick={() => navigate(`/sessions/${session.id}`)}
                   className="text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   👁 view
