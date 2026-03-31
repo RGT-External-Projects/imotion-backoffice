@@ -227,7 +227,11 @@ export class AnalyticsController {
       therapistName: session.therapistPhone?.phoneNumber || 'Unknown',
       patientId: session.patientId,
       patientName: session.patient ? session.patient.name : 'Unknown',
-      stimuli: this.helperService.extractStimuliTypes(session.initialSettings),
+      // Prefer finalSettings (what was actually used by the end of the session),
+      // but fall back to initialSettings for in-progress sessions
+      stimuli: this.helperService.extractStimuliTypes(
+        session.finalSettings || session.initialSettings,
+      ),
       timestamp: session.sessionTimestamp,
       duration: session.duration ? this.helperService.formatDuration(session.duration) : '—',
       status: session.status,

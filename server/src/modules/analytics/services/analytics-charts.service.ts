@@ -97,7 +97,9 @@ export class AnalyticsChartsService {
     queryBuilder = this.helperService.applyFilters(queryBuilder, filters);
 
     const sessions = await queryBuilder
-      .select('session.initialSettings')
+      // Select both initial and final settings so we can reflect
+      // what was actually used by the end of each session
+      .select(['session.initialSettings', 'session.finalSettings'])
       .getMany();
 
     let visualCount = 0;
@@ -106,8 +108,13 @@ export class AnalyticsChartsService {
     const total = sessions.length;
 
     sessions.forEach((session) => {
+      // Prefer finalSettings when available (completed/interrupted sessions),
+      // otherwise fall back to the initial configuration
+      const effectiveSettings =
+        (session as any).finalSettings || (session as any).initialSettings;
+
       const stimuli = this.helperService.extractStimuliTypes(
-        session.initialSettings,
+        effectiveSettings,
       );
 
       if (stimuli.includes('Visual')) visualCount++;
