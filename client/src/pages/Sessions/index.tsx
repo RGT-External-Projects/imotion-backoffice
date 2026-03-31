@@ -41,7 +41,10 @@ export function Sessions() {
   const meta = sessionResponse?.meta;
 
   // Transform backend data to table format
-  const transformedSessions = sessions.map((session, index) => {
+  const transformedSessions = sessions.map((session, _index) => {
+    // Keep _index parameter for potential future use (e.g. row numbering)
+    // and to match your preferred style, but avoid TS unused-variable error
+    void _index;
     // Map backend status to display status
     let displayStatus: 'In Progress' | 'Paused' | 'Completed' | 'Interrupted';
     switch (session.status) {
