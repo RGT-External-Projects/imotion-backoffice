@@ -20,17 +20,12 @@ const extractStimuli = (settings: any): string[] => {
   return stimuli;
 };
 
-// Helper to format duration
+// Helper to format duration (include seconds, same as SessionDetails view)
 const formatDuration = (seconds: number | null): string => {
-  if (!seconds) return '0m';
+  if (!seconds) return 'N/A';
   const minutes = Math.floor(seconds / 60);
-  return `${minutes}m`;
-};
-
-// Helper to generate session display ID (first 8 chars of UUID)
-const generateSessionId = (_uuid: string, index: number, currentPage: number, itemsPerPage: number): string => {
-  const globalIndex = (currentPage - 1) * itemsPerPage + index;
-  return `S-${String(globalIndex + 1).padStart(4, '0')}`;
+  const secs = Math.floor(seconds % 60);
+  return `${minutes}m ${secs}s`;
 };
 
 export function Sessions() {
@@ -68,7 +63,8 @@ export function Sessions() {
 
     return {
       id: session.id, // Keep full UUID for navigation
-      displayId: generateSessionId(session.id, index, filters.page || 1, filters.limit || 10),
+      // Use the same short ID format as the dashboard (first 8 chars of UUID)
+      displayId: session.id.substring(0, 8).toUpperCase(),
       phoneId: session.therapistPhone?.phoneNumber || 'Unknown',
       device: session.device?.deviceName || 'Unknown',
       stimuli: extractStimuli(session.finalSettings || session.initialSettings),

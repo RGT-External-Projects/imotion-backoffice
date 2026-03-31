@@ -7,9 +7,9 @@ interface DeviceSessionHistoryProps {
   sessions: DeviceSession[];
 }
 
-// Helper to format duration from seconds to "Xm Ys"
+// Helper to format duration from seconds to "Xm Ys" (consistent with Sessions views)
 const formatDuration = (seconds: number | null | undefined): string => {
-  if (!seconds) return '0m 0s';
+  if (!seconds) return 'N/A';
   const minutes = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${minutes}m ${secs}s`;

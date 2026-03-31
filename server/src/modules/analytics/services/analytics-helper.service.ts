@@ -105,26 +105,57 @@ export class AnalyticsHelperService {
   }
 
   /**
-   * Extract stimuli types from initialSettings JSON
-   * Only count stimuli that are ENABLED, not just present
+   * Extract stimuli types from session settings JSON.
+   *
+   * Frontend currently treats a stimulus as "used" if either:
+   * - the settings block exists (visual/audio/vibration present), or
+   * - its feedback/enabled flag is true.
+   *
+   * The Sessions page uses a simple presence check:
+   *   if (settings?.visual) stimuli.push('Visual');
+   *   if (settings?.audio) stimuli.push('Audio');
+   *   if (settings?.vibration || settings?.tactile) stimuli.push('Vibration');
+   *
+   * We mirror that behaviour here, while also honouring optional
+   * `enabled` / `feedback` flags when present so older/newer payloads
+   * both work.
    */
   extractStimuliTypes(initialSettings: any): string[] {
     const stimuli: string[] = [];
 
     if (!initialSettings) return stimuli;
 
-    // Check if each stimuli type is ENABLED (not just if property exists)
-    if (initialSettings.visual && initialSettings.visual.enabled === true) {
+    const isVisualEnabled = !!initialSettings.visual && (
+      initialSettings.visual.enabled === true ||
+      initialSettings.visual.feedback === true ||
+      // Fallback: if block exists but no explicit flag, treat as used
+      (initialSettings.visual.enabled === undefined && initialSettings.visual.feedback === undefined)
+    );
+
+    if (isVisualEnabled) {
       stimuli.push('Visual');
     }
 
-    if (initialSettings.audio && initialSettings.audio.enabled === true) {
+    const isAudioEnabled = !!initialSettings.audio && (
+      initialSettings.audio.enabled === true ||
+      initialSettings.audio.feedback === true ||
+      (initialSettings.audio.enabled === undefined && initialSettings.audio.feedback === undefined)
+    );
+
+    if (isAudioEnabled) {
       stimuli.push('Audio');
     }
 
-    if ((initialSettings.vibration && initialSettings.vibration.enabled === true) ||
-        (initialSettings.tactile && initialSettings.tactile.enabled === true)) {
-      stimuli.push('Vibration'); // Fallback for old data with "tactile"
+    const vibrationBlock = initialSettings.vibration || initialSettings.tactile;
+    const isVibrationEnabled = !!vibrationBlock && (
+      vibrationBlock.enabled === true ||
+      vibrationBlock.feedback === true ||
+      (vibrationBlock.enabled === undefined && vibrationBlock.feedback === undefined)
+    );
+
+    if (isVibrationEnabled) {
+      // Fallback for old data with "tactile" still maps to "Vibration" label
+      stimuli.push('Vibration');
     }
 
     return stimuli;
