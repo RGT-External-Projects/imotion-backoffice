@@ -113,8 +113,8 @@ export function OverviewTab() {
             <div className="flex items-center gap-3 pb-4 border-b">
               <User className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Patient Code</p>
-                <p className="font-semibold">Patient - 233</p>
+                <p className="text-sm text-muted-foreground">Session Configuration Code</p>
+                <p className="font-semibold">Session Configuration - 233</p>
               </div>
             </div>
 

@@ -215,7 +215,7 @@ export function SessionDetails() {
                     <div className="flex items-start gap-3">
                       <PatientIcon size={20} className="text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-500 mb-2">Patient Code</p>
+                        <p className="text-sm text-gray-500 mb-2">Session Configuration Code</p>
                         <p className="text-xl font-semibold text-gray-900">
                           {session.patient?.patientCode || 'N/A'}
                         </p>

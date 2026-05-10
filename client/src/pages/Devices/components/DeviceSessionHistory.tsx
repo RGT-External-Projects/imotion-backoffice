@@ -51,7 +51,7 @@ export function DeviceSessionHistory({ sessions }: DeviceSessionHistoryProps) {
                   <tr className="border-b border-gray-200 text-left text-sm text-muted-foreground">
                     <th className="pb-3 font-semibold">Session ID</th>
                     <th className="pb-3 font-semibold">Phone ID</th>
-                    <th className="pb-3 font-semibold">Patient Code</th>
+                    <th className="pb-3 font-semibold">Session Configuration Code</th>
                     <th className="pb-3 font-semibold">Session Timestamp</th>
                     <th className="pb-3 font-semibold">Duration</th>
                   </tr>

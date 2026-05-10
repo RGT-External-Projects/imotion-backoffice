@@ -141,7 +141,7 @@ export function Dashboard() {
               />
               <StatCard
                 icon={Users}
-                label="Patients"
+                label="Session Configurations"
                 value={hasData ? stats.totalPatients.toString() : "—"}
                 iconBgColor="bg-purple-50"
                 iconColor="text-purple-600"
