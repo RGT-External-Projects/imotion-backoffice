@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Patient } from './entities/patient.entity';
@@ -16,6 +16,13 @@ export class PatientService {
   ) {}
 
   async create(createPatientDto: CreatePatientDto): Promise<Patient> {
+    const existing = await this.patientRepository.findOne({
+      where: { name: createPatientDto.name },
+    });
+    if (existing) {
+      throw new ConflictException(`A patient with the name "${createPatientDto.name}" already exists`);
+    }
+
     // Generate unique patient code
     const patientCode = await this.generatePatientCode();
     
