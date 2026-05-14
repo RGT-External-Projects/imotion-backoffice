@@ -20,7 +20,7 @@ export class PatientService {
       where: { name: createPatientDto.name },
     });
     if (existing) {
-      throw new ConflictException(`A patient with the name "${createPatientDto.name}" already exists`);
+      throw new ConflictException(`A configuration with the name "${createPatientDto.name}" already exists`);
     }
 
     // Generate unique patient code
@@ -123,7 +123,7 @@ export class PatientService {
     });
 
     if (!patient) {
-      throw new NotFoundException(`Patient with ID ${id} not found`);
+      throw new NotFoundException(`Configuration with ID ${id} not found`);
     }
 
     return patient;

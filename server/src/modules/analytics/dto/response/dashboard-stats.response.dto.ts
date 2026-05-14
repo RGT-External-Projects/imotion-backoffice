@@ -14,7 +14,7 @@ export class DashboardStatsResponseDto {
   activeDevices: number;
 
   @ApiProperty({
-    description: 'Total number of patients',
+    description: 'Total number of configurations',
     example: 4,
   })
   totalPatients: number;

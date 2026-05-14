@@ -32,7 +32,7 @@ export class AnalyticsController {
   @ApiOperation({
     summary: 'Get dashboard statistics',
     description:
-      'Returns statistics for Dashboard page - always shows today\'s data. Includes sessions today, active devices, total patients, and average session duration.',
+      'Returns statistics for Dashboard page - always shows today\'s data. Includes sessions today, active devices, total configurations, and average session duration.',
   })
   @ApiResponse({
     status: 200,

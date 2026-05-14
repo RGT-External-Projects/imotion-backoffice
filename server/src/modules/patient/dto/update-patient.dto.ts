@@ -5,7 +5,7 @@ import { SessionSettings } from '../../session/entities/session.entity';
 
 export class UpdatePatientDto extends PartialType(CreatePatientDto) {
   @ApiPropertyOptional({ 
-    description: 'Patient preferred session settings',
+    description: 'Configuration preferred session settings',
     example: {
       visual: {
         enabled: true,

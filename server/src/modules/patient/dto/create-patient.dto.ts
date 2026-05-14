@@ -2,21 +2,21 @@ import { IsString, IsOptional, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePatientDto {
-  @ApiProperty({ description: 'Patient name', example: 'Emeralda Angie' })
+  @ApiProperty({ description: 'Configuration name', example: 'Emeralda Angie' })
   @IsString()
   name: string;
 
-  @ApiPropertyOptional({ description: 'Patient tags', example: ['PTSD', 'Anxiety'] })
+  @ApiPropertyOptional({ description: 'Configuration tags', example: ['PTSD', 'Anxiety'] })
   @IsArray()
   @IsOptional()
   tags?: string[];
 
-  @ApiPropertyOptional({ description: 'Patient notes', example: 'Prefers slower speeds with audio feedback' })
+  @ApiPropertyOptional({ description: 'Configuration notes', example: 'Prefers slower speeds with audio feedback' })
   @IsString()
   @IsOptional()
   notes?: string;
 
-  @ApiPropertyOptional({ description: 'Patient status', example: 'active' })
+  @ApiPropertyOptional({ description: 'Configuration status', example: 'active' })
   @IsString()
   @IsOptional()
   status?: string;
