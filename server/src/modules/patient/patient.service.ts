@@ -51,6 +51,11 @@ export class PatientService {
 
       patient.therapistPhoneId = therapistPhone.id;
     }
+
+    if (createPatientDto.sessionSettings) {
+      patient.preferredSettings = createPatientDto.sessionSettings;
+    }
+
     return this.patientRepository.save(patient);
   }
 

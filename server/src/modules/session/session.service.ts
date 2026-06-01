@@ -603,47 +603,41 @@ export class SessionService {
             const vibrationChanges = processedChanges.filter(c => c.settingPath.startsWith('vibration.'));
             const audioChanges = processedChanges.filter(c => c.settingPath.startsWith('audio.'));
             const visualChanges = processedChanges.filter(c => c.settingPath.startsWith('visual.'));
-            
+            const speedChanges = processedChanges.filter(c => c.settingPath.startsWith('speed.'));
+
             const descriptionParts: string[] = [];
-            
-            if (vibrationChanges.length > 0) {
-              const changes = vibrationChanges.map(c => {
+
+            const formatChanges = (changes: typeof processedChanges) =>
+              changes.map(c => {
                 const name = this.formatSettingName(c.settingPath);
                 const oldVal = this.formatValue(c.oldValue);
                 const newVal = this.formatValue(c.newValue);
-                // Only show change if values are actually different
                 if (oldVal === newVal) return null;
                 return `  ${name}: ${oldVal} → ${newVal}`;
               }).filter(Boolean).join('\n');
+
+            if (vibrationChanges.length > 0) {
+              const changes = formatChanges(vibrationChanges);
               if (changes) descriptionParts.push(`Vibration:\n${changes}`);
             }
-            
+
             if (audioChanges.length > 0) {
-              const changes = audioChanges.map(c => {
-                const name = this.formatSettingName(c.settingPath);
-                const oldVal = this.formatValue(c.oldValue);
-                const newVal = this.formatValue(c.newValue);
-                // Only show change if values are actually different
-                if (oldVal === newVal) return null;
-                return `  ${name}: ${oldVal} → ${newVal}`;
-              }).filter(Boolean).join('\n');
+              const changes = formatChanges(audioChanges);
               if (changes) descriptionParts.push(`Audio:\n${changes}`);
             }
-            
+
             if (visualChanges.length > 0) {
-              const changes = visualChanges.map(c => {
-                const name = this.formatSettingName(c.settingPath);
-                const oldVal = this.formatValue(c.oldValue);
-                const newVal = this.formatValue(c.newValue);
-                // Only show change if values are actually different
-                if (oldVal === newVal) return null;
-                return `  ${name}: ${oldVal} → ${newVal}`;
-              }).filter(Boolean).join('\n');
+              const changes = formatChanges(visualChanges);
               if (changes) descriptionParts.push(`Visual:\n${changes}`);
             }
-            
+
+            if (speedChanges.length > 0) {
+              const changes = formatChanges(speedChanges);
+              if (changes) descriptionParts.push(`Speed:\n${changes}`);
+            }
+
             // Don't add title here - it's already in the UI as event title
-            description = descriptionParts.length > 0 
+            description = descriptionParts.length > 0
               ? descriptionParts.join('\n\n')
               : 'Stimuli configuration updated';
           }

@@ -44,6 +44,10 @@ export class CreateSessionDto {
         volume: 60,
         type: 'nature',
       },
+      speed: {
+        enabled: true,
+        value: 5,
+      },
     },
   })
   @IsObject()

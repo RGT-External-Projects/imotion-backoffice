@@ -25,6 +25,7 @@ export interface SessionSettings {
     feedback: boolean;
     intensity: number;
     pulse: string;
+    speed?: number;
   };
   audio: {
     feedback: boolean;
@@ -38,66 +39,70 @@ export interface SessionSettings {
     movement: string;
     speed: number;
   };
+  speed?: {
+    enabled: boolean;
+    value: number;
+  };
 }
 
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'device_id', type: 'uuid' })
-  deviceId: string;
+  deviceId!: string;
 
   @Column({ name: 'therapist_phone_id', type: 'uuid' })
-  therapistPhoneId: string;
+  therapistPhoneId!: string;
 
   @Column({ name: 'patient_id', type: 'uuid' })
-  patientId: string;
+  patientId!: string;
 
   @Column({ type: 'jsonb', name: 'initial_settings' })
-  initialSettings: SessionSettings;
+  initialSettings!: SessionSettings;
 
   @Column({ type: 'jsonb', name: 'final_settings', nullable: true })
-  finalSettings: SessionSettings;
+  finalSettings!: SessionSettings;
 
   @Column({
     type: 'enum',
     enum: SessionStatus,
     default: SessionStatus.IN_PROGRESS,
   })
-  status: SessionStatus;
+  status!: SessionStatus;
 
   @Column({ name: 'duration', type: 'int', nullable: true, comment: 'Duration in seconds' })
-  duration: number;
+  duration!: number;
 
   @Column({ name: 'session_timestamp', type: 'timestamp' })
-  sessionTimestamp: Date;
+  sessionTimestamp!: Date;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Relations
   @ManyToOne(() => Device, (device) => device.sessions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'device_id' })
-  device: Device;
+  device!: Device;
 
   @ManyToOne(() => TherapistPhone, (phone) => phone.sessions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'therapist_phone_id' })
-  therapistPhone: TherapistPhone;
+  therapistPhone!: TherapistPhone;
 
   @ManyToOne(() => Patient, (patient) => patient.sessions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'patient_id' })
-  patient: Patient;
+  patient!: Patient;
 
   @OneToMany(() => SessionActivityLog, (log) => log.session)
-  activityLogs: SessionActivityLog[];
+  activityLogs!: SessionActivityLog[];
 }

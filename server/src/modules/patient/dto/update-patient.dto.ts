@@ -4,7 +4,7 @@ import { CreatePatientDto } from './create-patient.dto';
 import { SessionSettings } from '../../session/entities/session.entity';
 
 export class UpdatePatientDto extends PartialType(CreatePatientDto) {
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     description: 'Configuration preferred session settings',
     example: {
       visual: {
@@ -23,6 +23,10 @@ export class UpdatePatientDto extends PartialType(CreatePatientDto) {
         enabled: false,
         volume: 60,
         type: 'nature',
+      },
+      speed: {
+        enabled: true,
+        value: 5,
       },
     }
   })
